@@ -1,126 +1,143 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** planejamento, sem implementação iniciada.  
-> **Plataforma inicial:** Android (Galaxy S23 Ultra).  
-> **Objetivo:** criar um jogo educativo de robótica em realidade aumentada móvel com interação espacial: o robô virtual planeja um caminho em torno de obstáculos reais detectados com profundidade.  
-> **MVP:** posicionar um rover no piso, escolher o destino e fazê-lo contornar **uma caixa física estática**, usando um mapa local de obstáculos estimado pela câmera.
+> **Status:** planejamento; implementação ainda não iniciada.  
+> **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
+> **Objetivo:** criar um jogo educativo de robótica em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
+> **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
 
-## 1. Escopo e decisões
+## 1. Decisões técnicas
 
-- **Motor:** Unity 6, C# e Universal Render Pipeline (URP).
-- **XR:** AR Foundation + Google ARCore XR Plugin (versões compatíveis com a instalação do Unity).
-- **Dispositivo de teste:** Galaxy S23 Ultra com Google Play Services para RA atualizado.
-- **Posicionamento:** ARPlaneManager e ARRaycastManager.
-- **Profundidade:** AROcclusionManager / ARCore Depth API.
-- **Navegação:** grade de ocupação 2D e algoritmo A*; não é necessário treinar uma IA.
-- **Movimento:** robô 3D simulado. Nenhum hardware de robótica real.
-- **Interface:** Escanear, Posicionar, Definir destino, Iniciar e Reiniciar.
-- **Cenário:** área pequena, piso aproximadamente plano e bem iluminado, objetos estáticos.
-- **Fora do MVP:** reconstrução completa da casa, objetos em movimento, multiplayer, reconhecimento semântico de móveis e SLAM próprio.
+| Componente | Tecnologia | Responsabilidade |
+| --- | --- | --- |
+| Linguagem e build | Kotlin, Gradle | Aplicação nativa, lógica e testes |
+| Editor | VS Code/Cursor + terminal; Android Studio opcional | Desenvolvimento assistido por LLM; configurar Android SDK quando necessário |
+| Interface | Jetpack Compose | Controles, estados e painéis |
+| Rastreamento espacial | Google ARCore SDK para Android | Câmera, planos, poses, hit tests e âncoras |
+| Renderização | SceneView (ARSceneView) + Google Filament | Exibir rover, marcadores e rota em 3D |
+| Profundidade | ARCore Depth API / Raw Depth | Observar distâncias, detectar obstáculos |
+| Navegação | Grade 2D e A* em Kotlin puro | Calcular caminhos sem motor de jogos |
+| Qualidade | JUnit, Gradle, adb e testes no aparelho | Testes da lógica e validação da sessão AR |
 
-**Princípio:** validar cada parte no celular antes de avançar. Começar com um obstáculo **manual** e só depois substituí-lo por um obstáculo **detectado**.
+**Sem Unity, C#, URP ou AR Foundation.** Não é necessário headset, motor de jogos ou robô físico.
+
+- Preferir classes Kotlin pequenas e independentes de Android para grade, ocupação e A*.
+- Utilizar o celular real para executar AR: não depender de um emulador Android pesado.
+- Manter acesso às classes `Session` e `Frame` do **ARCore** mesmo quando a renderização for abstraída pelo SceneView.
+- Usar versões **compatíveis e fixadas** de Kotlin, Compose, SceneView e ARCore, escolhidas após compilar o projeto mínimo; consultar a API instalada, pois o SceneView evolui rapidamente.
+- Fazer o diagnóstico da Depth API antes de prometer colisão e desvio de obstáculos físicos.
+- Cenário inicial: área pequena, piso plano, boa iluminação e um obstáculo estático.
+- Fora do MVP: mapear uma casa inteira, objetos em movimento, multiplayer, reconhecer móveis semanticamente, controlar robô físico e implementar SLAM próprio.
+
+**Estratégia:** primeiro validar um caminho com obstáculo **manual**; depois integrar um obstáculo **detectado** por profundidade.
 
 ## 2. Implementação por partes
 
-### Parte 1 — Configurar Unity e Android
+### Parte 1 — Criar o aplicativo Android mínimo
 
-- [ ] Criar projeto Unity 6 (3D URP).
-- [ ] Instalar e configurar AR Foundation, ARCore XR Plugin e XR Plug-in Management.
-- [ ] Configurar Android, ARM64, permissões e requisitos das versões de pacotes escolhidas.
-- [ ] Criar cena com AR Session, XR Origin e AR Camera.
-- [ ] Gerar APK e testar abertura de sessão AR no Galaxy S23 Ultra.
-- [ ] Exibir mensagem quando AR estiver indisponível.
+- [ ] Preparar JDK e Android SDK; verificar `adb` e `./gradlew`.
+- [ ] Criar projeto Kotlin/Gradle com Jetpack Compose e configuração Android.
+- [ ] Adicionar SceneView/ARSceneView e dependências compatíveis de ARCore.
+- [ ] Configurar manifest, câmera, ARCore, verificações de compatibilidade e permissões.
+- [ ] Exibir a câmera e uma sessão AR de teste no Galaxy S23 Ultra.
+- [ ] Criar estados claros para recurso indisponível, permissão negada e sessão interrompida.
+- [ ] Validar compilação e instalação via Gradle/adb, sem depender do editor gráfico.
 
-**Critério de conclusão:** a câmera e o rastreamento espacial funcionam no APK.
+**Concluído quando:** o APK abre, solicita permissões corretamente e mostra a sessão AR com rastreamento no aparelho.
 
-### Parte 2 — Detectar piso, rover e destino
+### Parte 2 — Detectar piso, posicionar rover e destino
 
-- [ ] Ativar ARPlaneManager para planos horizontais.
-- [ ] Usar ARRaycastManager para escolher pontos do piso por toque.
-- [ ] Adicionar rover 3D leve, em escala real, com orientação correta.
-- [ ] Mostrar marcador de posicionamento (reticle) e destino.
-- [ ] Exibir estados: procurando piso, rover posicionado, destino definido e rastreamento perdido.
+- [ ] Consultar planos horizontais rastreados pelo ARCore (`Plane`).
+- [ ] Aplicar hit test com `Frame.hitTest(...)` para selecionar pontos de posicionamento.
+- [ ] Exibir reticle enquanto o plano é encontrado.
+- [ ] Adicionar modelo 3D do rover leve, em escala adequada (GLB/glTF).
+- [ ] Fixar rover e destino a referências espaciais usando `Anchor`, gerenciando seu ciclo de vida.
+- [ ] Exibir estados: procurando piso, posicionando, pronto e rastreamento perdido.
 
-**Critério de conclusão:** rover e destino permanecem associados à mesma área do piso ao movimentar o celular, respeitando as limitações do rastreamento.
+**Concluído quando:** o rover e o destino permanecem visualmente alinhados ao piso ao movimentar o celular, dentro dos limites do ARCore.
 
-### Parte 3 — Planejamento A* em mapa simulado
+### Parte 3 — Implementar A* sem depender de AR
 
-- [ ] Criar grade 2D local (ex.: 2 × 2 m, células de 10–20 cm).
-- [ ] Representar células livres, ocupadas e desconhecidas.
-- [ ] Permitir marcar **manualmente** um obstáculo retangular para depuração.
-- [ ] Implementar A* com heurística admissível e custo coerente com os movimentos permitidos.
-- [ ] Exibir a rota e tratar casos sem caminho, fora da área ou em célula ocupada.
-- [ ] Testar caminho livre, desvio, destino bloqueado e ausência de rota.
+- [ ] Criar grade local 2D (exemplo: 2 × 2 m, células de 10–20 cm).
+- [ ] Distinguir células **livres**, **ocupadas** e **desconhecidas**.
+- [ ] Permitir um obstáculo retangular **manual** para testes.
+- [ ] Implementar A* em Kotlin puro, com heurística consistente e regras de vizinhança definidas.
+- [ ] Converter o caminho em pontos 3D visíveis sobre o piso.
+- [ ] Tratar ausência de rota, início/destino bloqueado e coordenadas fora da grade.
+- [ ] Escrever testes JUnit para caminho livre, desvio, bloqueio e menor caminho em cenários simples.
 
-**Critério de conclusão:** A* encontra uma rota alternativa em torno do obstáculo artificial, sem depender da Depth API.
+**Concluído quando:** o caminho contorna o obstáculo manual e os testes da lógica executam sem câmera/ARCore.
 
-### Parte 4 — Captura e diagnóstico de profundidade
+### Parte 4 — Ler e visualizar dados reais de profundidade
 
-- [ ] Adicionar AROcclusionManager à câmera.
-- [ ] Verificar disponibilidade da Depth API em tempo de execução.
-- [ ] Obter dados de profundidade compatíveis com o provedor e mostrar um mapa colorido para diagnóstico.
-- [ ] Testar chão, caixa e parede em diferentes distâncias e condições de iluminação.
-- [ ] Filtrar amostras inválidas; se disponível, utilizar os valores de confiança de Raw Depth.
-- [ ] Limitar frequência de leitura e descartar corretamente os buffers/imagens capturados.
+- [ ] Verificar compatibilidade e suporte ao `Config.DepthMode` em execução.
+- [ ] Configurar `AUTOMATIC` ou `RAW_DEPTH_ONLY` conforme o experimento e suporte do aparelho.
+- [ ] Acessar quadros ARCore e obter profundidade por APIs como `Frame.acquireDepthImage16Bits()` ou `Frame.acquireRawDepthImage16Bits()`, de acordo com o modo configurado.
+- [ ] Exibir um mapa de profundidade colorido em um modo de diagnóstico.
+- [ ] Tratar ausência de atualização, medidas inválidas e, quando disponíveis, imagens de confiança Raw Depth.
+- [ ] Encerrar corretamente cada `Image` adquirida e evitar processamento pesado na thread da interface.
+- [ ] Testar piso, caixa e parede em iluminação/diferentes distâncias.
 
-**Critério de conclusão:** é possível visualizar a profundidade estimada e identificar quando ela não está disponível ou é pouco confiável.
+**Concluído quando:** o celular mostra profundidade estimada e o aplicativo informa quando essa leitura é indisponível ou incerta.
 
-### Parte 5 — Transformar profundidade em mapa de obstáculos
+### Parte 5 — Converter profundidade em mapa de obstáculos
 
-- [ ] Fixar um referencial local alinhado ao piso.
-- [ ] Converter amostras de profundidade em pontos 3D usando pose e parâmetros de câmera adequados.
-- [ ] Ignorar pontos no nível do piso, fora da área e valores inválidos.
-- [ ] Projetar obstáculos acima do piso na grade 2D.
-- [ ] Inflar as regiões bloqueadas por margem compatível com o tamanho do rover.
-- [ ] Reduzir ruído com filtragem e observações repetidas.
-- [ ] Distinguir células desconhecidas de células confirmadamente livres; não assumir que área sem profundidade está livre.
-- [ ] Manter o modo manual para depuração.
+- [ ] Definir referencial de mapa **ancorado ao piso** e coerente com rover e destino.
+- [ ] Projetar amostras de profundidade em pontos 3D usando intrínsecos de câmera, resolução da imagem, orientação e pose correspondentes.
+- [ ] Filtrar medidas inválidas/ruidosas e pontos próximos ao piso.
+- [ ] Projetar pontos acima do plano do piso nas células da grade.
+- [ ] Inflar células ocupadas de acordo com raio/largura do rover e margem de segurança.
+- [ ] Combinar observações sucessivas com filtros conservadores, evitando oscilações.
+- [ ] Conservar células não observadas como **desconhecidas**, não automaticamente livres.
+- [ ] Disponibilizar sobreposição visual de grade, pontos/obstáculos e rota para depuração.
+- [ ] Preservar a opção de inserir obstáculo manual.
 
-**Critério de conclusão:** uma caixa real parada no chão produz células ocupadas e pode ser contornada pelo A*.
+**Concluído quando:** uma caixa física estática é representada de forma estável como região bloqueada, suficiente para o A* calcular um desvio.
 
-**Nota:** a Depth API **não fornece automaticamente** um mapa de ocupação pronto nem uma malha precisa de colisões. Esta conversão é uma parte central do desenvolvimento.
+**Atenção:** a Depth API não devolve automaticamente mapa de ocupação, colisores físicos nem identificação semântica de objetos. Essa conversão é uma parte principal do projeto.
 
-### Parte 6 — Navegação e movimento do rover
+### Parte 6 — Fazer o rover navegar
 
-- [ ] Mover o rover virtual pelos pontos da rota, com velocidade moderada e rotação suave.
-- [ ] Animar rodas e mostrar estado da navegação.
-- [ ] Parar ou solicitar novo escaneamento se o rastreamento estiver ruim.
-- [ ] Replanejar somente após mudanças estáveis no mapa, sem executar A* a cada quadro.
-- [ ] Detectar chegada com tolerância de posição.
-- [ ] Registrar distância estimada, tempo de cálculo da rota e duração da missão.
+- [ ] Implementar deslocamento do rover ao longo da rota com velocidade limitada e orientação suave.
+- [ ] Animar as rodas e atualizar estados da missão.
+- [ ] Parar ao perder rastreamento ou quando o mapa ficar pouco confiável.
+- [ ] Replanejar somente após mudanças relevantes e estáveis, com limite de frequência.
+- [ ] Definir tolerância de chegada ao destino.
+- [ ] Medir distância aproximada, tempo de cálculo A* e duração da missão.
 
-**Critério de conclusão:** o rover vai do ponto inicial ao destino evitando uma caixa real detectada, em cenário de teste controlado.
+**Concluído quando:** o rover virtual chega ao destino contornando a caixa real em um cenário controlado.
 
-### Parte 7 — Jogo e modo educativo
+### Parte 7 — Tornar o projeto útil e divertido
 
 - [ ] Criar **Missão 01 — Desvie do obstáculo**.
-- [ ] Exibir objetivo, progresso, sucesso e opção de reiniciar.
-- [ ] Criar pontuação simples por missão concluída e percurso.
-- [ ] Adicionar opção **Missão / Laboratório**: em Laboratório, mostrar grade, rota e métricas.
-- [ ] Criar interface minimalista, legível e sem excesso de instruções.
+- [ ] Exibir controles intuitivos: escanear, posicionar, escolher destino, iniciar e reiniciar.
+- [ ] Adicionar conclusão da missão e pontuação simples.
+- [ ] Criar dois modos: **Missão** (experiência lúdica) e **Laboratório** (mapa, rota e métricas).
+- [ ] Manter interface mobile minimalista, legível e com poucos elementos simultâneos.
 
-**Critério de conclusão:** uma pessoa consegue concluir a missão sem conhecer Unity, ARCore ou A*.
+**Concluído quando:** alguém consegue completar a missão sem conhecer ARCore ou algoritmos de navegação.
 
-### Parte 8 — Qualidade, testes e documentação
+### Parte 8 — Validar, otimizar e documentar
 
-- [ ] Testar em três cenários: piso livre, uma caixa, ambiente de iluminação/rastreamento desfavorável.
-- [ ] Registrar falhas de profundidade, falsos obstáculos e estabilidade do posicionamento.
-- [ ] Medir FPS, memória e tempo do A* no dispositivo.
-- [ ] Tratar retomada do aplicativo, perda de rastreamento, permissão negada e recursos indisponíveis.
-- [ ] Criar README com requisitos, instalação, arquitetura, imagens e limitações verificadas.
-- [ ] Adicionar testes unitários para grade/A* e, quando adequado, CI de validação.
+- [ ] Testar piso livre, caixa estática e condições desfavoráveis de iluminação/rastreamento.
+- [ ] Registrar falsos obstáculos, falhas de profundidade e estabilidade do posicionamento.
+- [ ] Medir FPS, memória, frequência de atualização do mapa e tempo do A* no celular.
+- [ ] Ajustar resolução/amostragem e frequência de processamento para evitar travamentos.
+- [ ] Tratar pausa, retomada, permissões negadas e recursos indisponíveis.
+- [ ] Documentar versões exatas das dependências e comandos para build/instalação.
+- [ ] Criar README com requisitos, arquitetura, imagens, demonstração e limitações verificadas.
+- [ ] Adicionar CI para compilar e executar testes unitários em mudanças de código.
 
-**Critério de conclusão:** o projeto pode ser instalado, demonstrado e reproduzido com suas limitações documentadas.
+**Concluído quando:** o APK pode ser instalado e demonstrado de modo reproduzível, com limitações conhecidas documentadas.
 
 ## 3. Marcos
 
-| Marco | Partes | Entrega |
+| Marco | Partes | Resultado |
 | --- | --- | --- |
-| M1 — Base AR | 1–2 | Rover e destino no piso |
-| M2 — Navegação | 3 | A* com obstáculo manual |
-| M3 — Integração espacial | 4–5 | Caixa física representada no mapa |
-| **M4 — MVP** | **6** | **Rover contorna a caixa real** |
-| M5 — Demonstração completa | 7–8 | Missão, interface, testes e documentação |
+| M1 — Base Android/AR | 1–2 | Rover e destino sobre piso real |
+| M2 — Navegação | 3 | A* e obstáculo manual com testes |
+| M3 — Visão espacial | 4–5 | Mapa de obstáculos estimado por profundidade |
+| **M4 — MVP** | **6** | **Rover desvia de caixa real** |
+| M5 — Experiência completa | 7–8 | Missão, laboratório, medições e documentação |
 
 ## 4. Estrutura futura sugerida
 
@@ -128,38 +145,55 @@
 rover-quest-mr-/
 ├── docs/
 │   └── step-by-step.md
-├── Assets/
-│   ├── Scenes/
-│   ├── Scripts/
-│   │   ├── AR/
-│   │   ├── Mapping/
-│   │   ├── Navigation/
-│   │   ├── Rover/
-│   │   └── UI/
-│   ├── Prefabs/
-│   └── Tests/
-├── Packages/
-├── ProjectSettings/
+├── app/
+│   └── src/
+│       ├── main/
+│       │   ├── java/.../roverquest/
+│       │   │   ├── ar/           # Sessão, planos, poses, anchors
+│       │   │   ├── depth/        # Captura e filtragem
+│       │   │   ├── mapping/      # Grade de ocupação
+│       │   │   ├── navigation/   # A*, rotas
+│       │   │   ├── rover/        # Movimento e renderização
+│       │   │   └── ui/           # Jetpack Compose
+│       │   ├── assets/models/   # Modelos GLB
+│       │   └── AndroidManifest.xml
+│       └── test/                 # Testes JVM (A* e mapeamento)
+├── gradle/
+├── build.gradle.kts
+├── settings.gradle.kts
+├── AGENTS.md                     # Contratos para agentes; criar futuramente
 └── README.md
 ```
 
-**Esta estrutura é apenas planejada:** criar pastas e código Unity somente na etapa correspondente. A inclusão deste documento não significa que funcionalidades foram implementadas.
+**Estrutura apenas planejada:** não criar código ou pastas vazias antecipadamente. O conteúdo acima não representa implementação concluída.
 
-## 5. Critérios técnicos e limitações
+## 5. Desenvolvimento assistido por LLM
 
-- A Depth API estima profundidade e pode produzir ruído, lacunas e erros; não se deve prometer desvio perfeito de qualquer objeto.
-- Identificar a geometria do piso não equivale a reconhecer semanticamente uma “mesa”, “cadeira” ou “caixa”.
-- Não usar objetos pequenos, translúcidos, refletivos ou em movimento como requisitos do primeiro MVP.
-- Se a profundidade não estiver disponível, apresentar aviso e permitir testar a navegação com obstáculo manual; **não** afirmar que os obstáculos físicos foram detectados.
-- Garantir que o mapa, o rover e o destino usem o mesmo referencial espacial.
-- “Realidade misturada” descreve a integração das geometrias física e virtual neste conceito; a aplicação é executada como RA móvel, não como headset MR.
+- Dividir solicitações ao agente **por etapa**, sem pedir toda a aplicação de uma vez.
+- Manter a lógica A*/mapeamento independente de API Android para permitir testes rápidos.
+- Exigir que cada mudança compile e execute testes relevantes antes de seguir.
+- Criar futuramente `AGENTS.md` com responsabilidades, convenções e critérios de aceite.
+- Consultar a documentação **da versão instalada** de SceneView; ele oferece `llms.txt` e integração MCP, mas exemplos da internet podem não corresponder à versão fixada.
+- Preferir Gradle CLI, VS Code/Cursor e `adb` para iteração; abrir o Android Studio apenas se necessário para configurar SDK, depurar ou inspecionar o aplicativo.
 
-## 6. Referências
+## 6. Limitações
 
-- [Unity — AR Foundation](https://docs.unity3d.com/Packages/com.unity.xr.arfoundation@6.0/manual/index.html)
-- [Unity — AR Foundation Samples](https://github.com/Unity-Technologies/arfoundation-samples)
+- **Profundidade é estimativa**, não medição perfeita. Superfícies reflexivas, pequenas, transparentes, sem textura ou mal iluminadas podem causar erros.
+- Plano detectado não implica reconhecimento semântico de “mesa”, “caixa” ou “cadeira”.
+- A área de navegação inicial é pequena, estática e explicitamente escaneada.
+- Se a profundidade falhar, mostrar aviso e oferecer o modo de obstáculo manual; não afirmar que os obstáculos físicos foram reconhecidos.
+- O rover é **simulado** e não executa movimentação física.
+- A aplicação é RA móvel com interação entre geometria física e virtual, no espectro de realidade misturada.
+
+## 7. Referências
+
+- [Google — ARCore Android SDK](https://developers.google.com/ar/develop/java/quickstart)
 - [Google — ARCore Depth API](https://developers.google.com/ar/develop/depth)
-- [Google — Raw Depth API](https://developers.google.com/ar/develop/unity-arf/raw-depth)
-- [Google — dispositivos compatíveis](https://developers.google.com/ar/devices)
+- [Google — Depth API para Android](https://developers.google.com/ar/develop/java/depth/overview)
+- [Google — Raw Depth no Android](https://developers.google.com/ar/develop/java/depth/raw-depth)
+- [Google — Dispositivos compatíveis](https://developers.google.com/ar/devices)
+- [SceneView — Android AR, exemplos e `llms.txt`](https://github.com/sceneview/sceneview)
+- [Jetpack Compose](https://developer.android.com/compose)
+- [Android — Testes locais](https://developer.android.com/training/testing/local-tests)
 
-> **Próxima ação:** executar apenas a Parte 1. Não implementar todas as partes simultaneamente.
+> **Próxima ação:** executar **apenas a Parte 1**, validar sessão AR no celular e fixar dependências que compilam. Não implementar todas as partes ao mesmo tempo.
