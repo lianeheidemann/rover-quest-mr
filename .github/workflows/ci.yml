@@ -47,3 +47,21 @@ jobs:
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           gh release create "$TAG" "$APK" --target "$GITHUB_SHA" \
             --title "RoverQuest MR $TAG" --generate-notes --latest
+
+      - name: Publish README CI badge
+        # Runs after failures too, so the badge on main always shows the real status.
+        if: always() && github.event_name == 'push'
+        working-directory: .
+        env:
+          STATUS: ${{ job.status }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          OUT=$(mktemp -d)
+          .github/scripts/ci-badge.sh "$STATUS" "$OUT/ci.svg"
+          cd "$OUT"
+          # Orphan branch holding only the badge, replaced on every run.
+          git init -q -b badges
+          git add ci.svg
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "CI badge: $STATUS"
+          git push -q -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" badges
