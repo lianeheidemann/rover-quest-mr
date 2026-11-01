@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:drawable="@color/roverquest_icon_background" />
-    <item
-        android:width="42dp"
-        android:height="42dp"
-        android:drawable="@drawable/roverquest_icon_foreground"
-        android:gravity="center" />
-</layer-list>
