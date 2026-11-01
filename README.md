@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="assets/robot/roverquest-app-icon.png" alt="Ícone do app RoverQuest MR" width="15%">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roverquest-app-icon-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="assets/readme/roverquest-app-icon-ligth.png">
+    <img src="assets/readme/roverquest-app-icon-ligth.png" alt="Ícone do app RoverQuest MR" width="15%">
+  </picture>
 </p>
 
 <h1 align="center">RoverQuest MR</h1>
