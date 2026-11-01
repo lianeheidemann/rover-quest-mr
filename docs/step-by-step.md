@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** planejamento; implementação ainda não iniciada.  
+> **Status:** Parte 1 implementada; falta validar no aparelho (sessão AR e suporte a profundidade).  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.

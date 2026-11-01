@@ -15,6 +15,7 @@ Todo o código do jogo fica em `game/` (projeto Gradle com os módulos `:app` e 
 
 ## Como trabalhar
 - Implemente **uma parte do plano por vez**; não antecipe partes futuras nem crie pastas vazias.
+- Não implemente o que está fora do MVP (ver plano) sem pedido explícito.
 - Ao concluir uma parte, marque os checkboxes correspondentes em `docs/step-by-step.md`.
 - Uma mudança só está pronta quando compila e os testes relevantes passam.
 - O que depende de câmera/ARCore só pode ser validado no aparelho: diga que não foi testado
@@ -27,6 +28,7 @@ Todo o código do jogo fica em `game/` (projeto Gradle com os módulos `:app` e 
 - `:core` recebe dados prontos (profundidade, toques, tempo); nunca acessa ARCore ou Android.
 - Posições do jogo (rover, destino, rota, obstáculos) são relativas à âncora do piso, não ao mundo.
 - A interface só exibe estado e envia ações; regras de jogo não ficam na UI.
+- Se a profundidade falhar, avise o jogador e mantenha o obstáculo manual; nunca diga que obstáculos foram detectados.
 - Fixe versões de dependências; o SceneView muda rápido: consulte a documentação/`llms.txt`
   da versão instalada, não exemplos genéricos da internet.
 - Código e identificadores em inglês; documentação em português.
