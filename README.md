@@ -5,6 +5,10 @@
 <h1 align="center">RoverQuest MR</h1>
 
 <p align="center">
+  <img src="assets/badge/badge_em-construcao-azul-v1.svg">
+</p>
+
+<p align="center">
   <a href="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml"><img src="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
 </p>
 
