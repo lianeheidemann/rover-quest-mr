@@ -40,6 +40,14 @@ Sua casa vira a fase. Caixas, livros e almofadas de verdade se tornam obstáculo
 
 > 🚧 Em desenvolvimento: os modos acima são a proposta do jogo e ainda não estão implementados.
 
+## Versão beta
+
+O que já funciona hoje, gravado no Galaxy S23 Ultra: o app detecta o piso, você toca para colocar o rover e o destino, e o rover calcula a rota. Ao adicionar um obstáculo virtual, a rota é recalculada para contorná-lo.
+
+<p align="center">
+  <img src="assets/interface/interface-v1.webp" alt="Versão beta do RoverQuest MR: piso detectado, rover e destino posicionados e rota desviando de um obstáculo virtual" width="40%">
+</p>
+
 ## Onde jogar
 
 > [!IMPORTANT]
