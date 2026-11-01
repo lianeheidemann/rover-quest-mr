@@ -16,7 +16,7 @@
   <img src="https://img.shields.io/badge/Kotlin-2.4.21-7F52FF?logo=kotlin&logoColor=white" alt="Kotlin 2.4.21">
   <img src="https://img.shields.io/badge/Android-minSdk%2024%20%7C%20compileSdk%2037.2-3DDC84?logo=android&logoColor=white" alt="Android minSdk 24, compileSdk 37.2">
   <img src="https://img.shields.io/badge/ARCore-1.57.0-4285F4?logo=google&logoColor=white" alt="ARCore 1.57.0">
-  <img src="https://img.shields.io/badge/SceneView-4.64.0-00897B" alt="SceneView 4.64.0">
+  <img src="https://img.shields.io/badge/SceneView-4.64.0-00897B" alt="SceneView 4.64.0"><br>
   <img src="https://img.shields.io/badge/Jetpack%20Compose-BOM%202026.09.00-4285F4?logo=jetpackcompose&logoColor=white" alt="Jetpack Compose BOM 2026.09.00">
   <img src="https://img.shields.io/badge/Gradle-9.8.2-02303A?logo=gradle&logoColor=white" alt="Gradle 9.8.2">
   <img src="https://img.shields.io/badge/AGP-9.5.0-3DDC84?logo=android&logoColor=white" alt="Android Gradle Plugin 9.5.0">
