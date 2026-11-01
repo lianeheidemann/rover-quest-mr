@@ -31,3 +31,5 @@ adb logcat -s RoverQuest       # logs do app
 O APK gerado fica em `app/build/outputs/apk/debug/app-debug.apk`.
 
 APKs prontos para instalar ficam em [Releases](https://github.com/lianeheidemann/rover-quest-mr/releases), publicados pela CI a cada merge na `main`.
+
+Para testar outra branch (ex.: `develop`) sem merge: **Actions → APK de teste → Run workflow**, escolha a branch. O APK aparece em Releases como `<branch> (teste)`, substituído a cada build.
