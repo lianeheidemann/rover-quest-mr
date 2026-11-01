@@ -28,6 +28,8 @@ O ARCore também pode oferecer resultados em **pontos característicos da imagem
 
 Um **retículo (*reticle*)** é a marca visual que indica ao jogador o local estimado para posicionamento antes de confirmar a ação.
 
+![Diagrama do hit test: toque na tela, raio projetado, plano do piso e criação da âncora.](images/hit-test.svg)
+
 ### Âncoras, coordenadas e orientação
 
 A posição encontrada pelo hit test é expressa no **espaço 3D estimado pelo ARCore** (*world space*). Uma **[âncora (*anchor*)](https://developers.google.com/ar/develop/anchors)** permite manter conteúdo virtual associado a essa referência, mesmo quando o ARCore ajusta sua estimativa do ambiente.
@@ -36,6 +38,8 @@ No jogo, a âncora é criada ao colocar o rover no piso. Destino, rota e obstác
 
 **Em sequência:** o ARCore detecta o plano → o retículo indica uma posição possível → o jogador toca → o hit test encontra o ponto 3D → o aplicativo estabelece a âncora → os elementos são desenhados em relação a ela.
 
+![Diagrama de âncoras e coordenadas locais: o rover e a rota continuam alinhados ao ambiente quando o celular se move.](images/ancora-coordenadas.svg)
+
 ## 2. Como um objeto real vira um obstáculo no mapa?
 
 Detectar o piso não basta para reconhecer uma caixa sobre ele. Para isso, o projeto utiliza a **ARCore Depth API**, que estima a distância da câmera até regiões da imagem. O modo **Raw Depth** disponibiliza dados menos processados e um mapa de confiança, útil para avaliar a qualidade das medições.
@@ -43,6 +47,8 @@ Detectar o piso não basta para reconhecer uma caixa sobre ele. Para isso, o pro
 Cada pixel com profundidade válida pode ser convertido em um **ponto 3D** usando os parâmetros internos da câmera (modelo *pinhole*). Depois, o ponto é transformado para as coordenadas da âncora do piso. Assim, é possível estimar **a altura do ponto em relação ao chão**, em vez de considerar somente sua distância até o celular.
 
 Na lógica implementada, pontos próximos ao nível do piso (±3 cm) indicam espaço livre; pontos entre **5 e 40 cm acima dele** podem indicar obstáculos. O ambiente é representado por uma **grade de ocupação** de 5 × 5 metros, dividida em células de 5 cm. Cada célula pode estar **livre, ocupada ou desconhecida**.
+
+![Diagrama do fluxo da câmera para o mapa de profundidade e a grade de ocupação.](images/profundidade-mapa.svg)
 
 Uma única leitura pode estar errada. Por isso, o mapa reúne evidências e exige **três votos líquidos** antes de mudar o estado de uma célula. Essa estabilidade, chamada de **histerese**, evita que obstáculos apareçam e desapareçam a cada quadro. Áreas que a câmera ainda não observou continuam desconhecidas; não são automaticamente consideradas seguras.
 
@@ -53,6 +59,8 @@ Uma única leitura pode estar errada. Por isso, o mapa reúne evidências e exig
 Depois de construir a grade, o aplicativo precisa decidir por quais células o rover pode passar. Primeiro, aplica a **inflação de obstáculos**: amplia as áreas bloqueadas conforme o raio do rover. Isso é necessário porque uma rota segura para um ponto não seria necessariamente segura para um robô com largura.
 
 Em seguida, o algoritmo **A\* (*A-star*)** procura uma rota de menor custo entre o início e o destino. Ele considera movimentos em oito direções, mas impede diagonais que atravessariam quinas de obstáculos. O resultado é uma sequência de posições, posteriormente desenhada sobre o piso.
+
+![Diagrama do planejamento A*: caminho do rover contornando uma área ocupada.](images/rota-obstaculo.svg)
 
 Com o mapa de profundidade ativo, a navegação considera apenas células observadas como livres e pode pedir que o jogador aponte a câmera para uma região ainda desconhecida. Também existe um **obstáculo manual**, inserido pelo jogador, para testar desvios mesmo sem profundidade. Nesse modo de teste, o caminho pode atravessar células ainda desconhecidas; isso **não equivale a confirmar que o chão real está desobstruído**.
 
