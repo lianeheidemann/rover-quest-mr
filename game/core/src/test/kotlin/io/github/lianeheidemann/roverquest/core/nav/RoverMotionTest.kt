@@ -126,4 +126,11 @@ class RoverMotionTest {
         assertEquals(SetupHint.NEEDS_SCAN, hint(driving = true, needsScan = true))
         assertEquals(SetupHint.ARRIVED, hint(arrived = true))
     }
+
+    @Test
+    fun `greeting hint shows while the rover greets, unless tracking is lost`() {
+        val placed = FloorSetup().confirmArea().withRover()
+        assertEquals(SetupHint.GREETING, setupHint(placed, true, false, true, true, greeting = true))
+        assertEquals(SetupHint.TRACKING_LOST, setupHint(placed, false, false, true, true, greeting = true))
+    }
 }

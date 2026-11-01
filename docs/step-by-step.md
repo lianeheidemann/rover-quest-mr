@@ -110,6 +110,10 @@
     (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
     mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
+  - **Extra (pedido da autora), não testado no S23 Ultra:** ao colocar o rover pela primeira vez na
+    partida, ele dá meia-volta, vem até perto do celular (para 40 cm antes, no máximo 1,2 m), balança
+    como quem cumprimenta, dá outra meia-volta e volta ao ponto inicial (`core/nav/RoverGreeting.kt`).
+    É só animação: não desvia de obstáculos e os toques esperam ela terminar.
 
 **Concluído quando:** o rover chega ao destino contornando a caixa real. **(MVP)**
 

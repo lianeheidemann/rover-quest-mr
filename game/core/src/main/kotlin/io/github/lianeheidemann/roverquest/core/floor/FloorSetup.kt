@@ -134,6 +134,7 @@ enum class SetupHint {
     CONFIRM_AREA,
     AIM_AT_FLOOR,
     TAP_TO_PLACE_ROVER,
+    GREETING,
     TAP_TO_PLACE_DESTINATION,
     NEEDS_SCAN,
     NO_ROUTE,
@@ -153,6 +154,7 @@ enum class SetupHint {
  * @param routeNeedsScan a route may exist, but part of the way was never observed.
  * @param driving the rover is moving along the route.
  * @param arrived the rover reached the destination.
+ * @param greeting the rover is greeting the player, just after being placed.
  */
 fun setupHint(
     setup: FloorSetup,
@@ -164,9 +166,11 @@ fun setupHint(
     routeNeedsScan: Boolean = false,
     driving: Boolean = false,
     arrived: Boolean = false,
+    greeting: Boolean = false,
 ): SetupHint = when {
     setup.roverPlaced && anchorStopped -> SetupHint.ANCHOR_LOST
     !cameraTracking -> SetupHint.TRACKING_LOST
+    greeting -> SetupHint.GREETING
     setup.phase == SetupPhase.READY -> when {
         arrived -> SetupHint.ARRIVED
         routeBlocked -> SetupHint.NO_ROUTE

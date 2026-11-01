@@ -7,6 +7,7 @@ import androidx.compose.runtime.LaunchedEffect
 import io.github.lianeheidemann.roverquest.core.floor.FloorPoint
 import io.github.lianeheidemann.roverquest.core.nav.MotionStatus
 import io.github.lianeheidemann.roverquest.core.nav.RoverMotion
+import io.github.lianeheidemann.roverquest.core.nav.RoverGreeting
 import io.github.lianeheidemann.roverquest.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -194,6 +195,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     // pose when idle, and the pose at the last replan while driving.
     var motion by remember { mutableStateOf(RoverMotion()) }
     var routeStart by remember { mutableStateOf(FloorPoint.ORIGIN) }
+    // When first placed, the rover drives up to the player to say hello, then goes back.
+    var greeting by remember { mutableStateOf<RoverGreeting?>(null) }
+    var greeted by remember { mutableStateOf(false) }
+    // Latest camera position in world space; read when the rover is placed.
+    val cameraPosition = remember { FloatArray(3) }
     val route = remember(setup, mapVersion, mapping, routeStart) {
         planRoute(setup, obstacleMap.takeIf { mapping }, rover = routeStart)
     }
@@ -207,7 +213,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     val idleHeading = remember(setup, route, motion.pose.position) {
         roverHeading(setup, (route as? RoutePlan.Route)?.points, from = motion.pose.position)
     }
-    val roverPose = if (motion.status == MotionStatus.IDLE) motion.pose.copy(heading = idleHeading) else motion.pose
+    val roverPose = greeting?.pose
+        ?: if (motion.status == MotionStatus.IDLE) motion.pose.copy(heading = idleHeading) else motion.pose
     val routeDots = remember(route) {
         (route as? RoutePlan.Route)?.let { samplePoints(it.points, ROUTE_DOT_SPACING) }.orEmpty()
     }
@@ -242,6 +249,20 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         }
     }
 
+    LaunchedEffect(greeting != null) {
+        if (greeting == null) return@LaunchedEffect
+        var last = 0L
+        while (true) {
+            withFrameNanos { now ->
+                val seconds = if (last == 0L) 0f else ((now - last) / 1e9f).coerceAtMost(0.1f)
+                last = now
+                greeting = greeting?.step(seconds, currentTracking)
+            }
+            if (greeting?.done != false) break
+        }
+        greeting = null
+    }
+
     fun go() {
         val points = (route as? RoutePlan.Route)?.points ?: return
         motion = motion.copy(pose = roverPose).start(points)
@@ -255,6 +276,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     fun onTap() {
         // Nothing is placed until the player accepts the detected floor area.
         if (setup.phase == SetupPhase.CONFIRM_AREA) return
+        // Taps wait until the rover is back from greeting the player.
+        if (greeting != null) return
         val hit = reticleHit ?: return
         if (trackingState != TrackingState.TRACKING) return
         rejection = null
@@ -265,6 +288,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             anchorState = TrackingState.TRACKING
             setup = setup.withRover()
             Log.i(TAG, "Rover placed")
+            if (!greeted) {
+                greeted = true
+                val player = created.pose.inverse().transformPoint(cameraPosition)
+                greeting = RoverGreeting.towards(FloorPoint(player[0], player[2]))
+            }
             return
         }
         val local = anchor.pose.inverse().transformPoint(hit.hitPose.translation)
@@ -290,6 +318,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         rejection = null
         tapMode = TapMode.DESTINATION
         motion = RoverMotion()
+        greeting = null
         routeStart = FloorPoint.ORIGIN
         // The map lives in the old anchor's frame.
         obstacleMap.clear()
@@ -364,6 +393,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         restart()
         // A new session has new floor planes: the player must accept the area again.
         setup = FloorSetup()
+        // A new game: the rover greets the player again.
+        greeted = false
         floorDetected = false
         reticleHit = null
         trackingState = TrackingState.PAUSED
@@ -403,6 +434,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         routeNeedsScan = route is RoutePlan.NeedsScan,
         driving = motion.isRunning,
         arrived = motion.status == MotionStatus.ARRIVED,
+        greeting = greeting != null,
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -436,6 +468,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 flashMode = if (torchOn) Config.FlashMode.TORCH else Config.FlashMode.OFF,
                 onSessionUpdated = { session, frame ->
                     recorder.recordFrame(session)
+                    frame.camera.pose.getTranslation(cameraPosition, 0)
                     if (diagnosticOn || floorAnchor != null) updateDepth(frame)
                     val state = frame.camera.trackingState
                     if (state != trackingState) trackingState = state
@@ -623,14 +656,14 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             confirmingArea = hint == SetupHint.CONFIRM_AREA,
             onConfirmArea = { setup = setup.confirmArea() },
             onNewArea = ::chooseNewArea,
-            tapMode = tapMode.takeIf { setup.roverPlaced },
+            tapMode = tapMode.takeIf { setup.roverPlaced && greeting == null },
             onTapModeChange = {
                 tapMode = it
                 rejection = null
             },
             hasObstacle = setup.obstacle != null,
             onRemoveObstacle = { setup = setup.withoutObstacle() },
-            showRestart = setup.roverPlaced,
+            showRestart = setup.roverPlaced && greeting == null,
             onRestart = ::restart,
             canGo = setup.phase == SetupPhase.READY && route is RoutePlan.Route &&
                 !motion.isRunning && motion.status != MotionStatus.ARRIVED,
@@ -882,6 +915,7 @@ private fun hintLabel(hint: SetupHint, blocked: NoPathReason?): String = when (h
     SetupHint.CONFIRM_AREA -> "Piso encontrado. Quer jogar nesta área?"
     SetupHint.AIM_AT_FLOOR -> "Mire o círculo no piso pontilhado."
     SetupHint.TAP_TO_PLACE_ROVER -> "Toque para colocar o rover."
+    SetupHint.GREETING -> "Olá! O rover veio te cumprimentar."
     SetupHint.TAP_TO_PLACE_DESTINATION -> "Toque para marcar o destino."
     SetupHint.NEEDS_SCAN -> "Aponte a câmera para o caminho."
     SetupHint.NO_ROUTE -> when (blocked) {
