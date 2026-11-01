@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Partes 1, 2 e 3 concluídas e validadas no S23 Ultra; próxima: Parte 4.  
+> **Status:** Partes 1, 2 e 3 concluídas e validadas no S23 Ultra; Parte 4 implementada, aguardando validação no aparelho.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -67,9 +67,14 @@
 
 ### Parte 4 — Ler profundidade
 
-- [ ] Ler e visualizar a profundidade em um modo de diagnóstico.
-- [ ] Avisar quando a leitura estiver indisponível ou incerta.
-- [ ] Gravar uma sessão do ARCore para repetir testes sem reposicionar o celular.
+- [x] Ler e visualizar a profundidade em um modo de diagnóstico.
+- [x] Avisar quando a leitura estiver indisponível ou incerta.
+- [x] Gravar uma sessão do ARCore para repetir testes sem reposicionar o celular.
+  - **Implementado, ainda não testado no S23 Ultra.** Botão "Diagnóstico de profundidade": liga a
+    Depth API (automática), sobrepõe a profundidade em cores (vermelho = perto, azul = longe) e mostra a
+    distância no centro da tela com a confiança do Raw Depth. A leitura é marcada como incerta com pouca
+    cobertura, sem dado no centro, confiança baixa ou fora de 0,3–5 m (`core/depth/`). "Gravar sessão"
+    salva um MP4 do ARCore em pasta privada do app; "Repetir gravação" reabre a sessão a partir dele.
 
 **Concluído quando:** o app mostra a profundidade estimada de piso, caixa e parede.
 

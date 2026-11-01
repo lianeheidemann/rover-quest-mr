@@ -7,7 +7,7 @@ on:
 
 jobs:
   apk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     defaults:
@@ -39,3 +39,11 @@ jobs:
           gh release create "$TAG" "$APK" --target "$GITHUB_SHA" --prerelease \
             --title "${BRANCH} (teste)" \
             --notes "APK de teste da branch \`${BRANCH}\` (commit ${GITHUB_SHA::7}). Substituído a cada novo build desta branch."
+          URL="https://github.com/${GH_REPO}/releases/download/${TAG}/${APK}"
+          {
+            echo "## 📱 APK de teste: \`${BRANCH}\`"
+            echo
+            echo "**[Baixar ${APK}](${URL})** (commit ${GITHUB_SHA::7})"
+            echo
+            echo "O mesmo link sempre aponta para o build mais recente desta branch."
+          } >> "$GITHUB_STEP_SUMMARY"
