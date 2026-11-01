@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1520.631" height="370.893" viewBox="39.685 82.054 1520.631 370.893" role="img" aria-labelledby="title desc">
+  <title id="title">Warning e Danger: duas faixas cruzadas</title>
+  <desc id="desc">Duas faixas amarelas com bordas listradas em preto se cruzam em X; os textos WARNING e DANGER alternam com caveiras. Fundo transparente.</desc>
+  <defs>
+    <pattern id="hazard-stripes" patternUnits="userSpaceOnUse" width="44" height="13">
+      <path d="M-10 13 L3 0 H20 L7 13 Z M34 13 L47 0 H64 L51 13 Z" fill="#111"/>
+    </pattern>
+    <symbol id="skull-mark" viewBox="0 0 38 49">
+      <!-- Ossos cruzados -->
+      <g stroke="#111" stroke-width="4" stroke-linecap="round">
+        <path d="M6 34 L32 46 M32 34 L6 46"/>
+      </g>
+      <g fill="#111">
+        <circle cx="5.5" cy="33.7" r="3.5"/><circle cx="32.5" cy="33.7" r="3.5"/>
+        <circle cx="5.5" cy="46" r="3.2"/><circle cx="32.5" cy="46" r="3.2"/>
+        <path d="M19 2 C9 2 4 9 4 18 C4 25 8 30 12 31 L12 35 L26 35 L26 31 C30 29 34 24 34 18 C34 9 28 2 19 2 Z"/>
+      </g>
+      <g fill="#ffdd12">
+        <ellipse cx="12.5" cy="19" rx="4.1" ry="5"/>
+        <ellipse cx="25.5" cy="19" rx="4.1" ry="5"/>
+        <path d="M19 24 L16.5 28 H21.5 Z"/>
+        <path d="M15 32 H23" stroke="#ffdd12" stroke-width="1.8" stroke-dasharray="2 1.5"/>
+      </g>
+    </symbol>
+  </defs>
+  <!-- Fita inferior: sobe da esquerda para direita -->
+  <g transform="rotate(-10.6 800 267.5)">
+<rect x="35" y="222" width="1530" height="91" fill="#ffdd12"/>
+<rect x="35" y="222" width="1530" height="13" fill="url(#hazard-stripes)"/>
+<rect x="35" y="300" width="1530" height="13" fill="url(#hazard-stripes)"/>
+<g fill="#111111" font-family="DejaVu Sans Condensed, Arial Narrow, Impact, sans-serif" font-size="46" font-weight="900" text-anchor="middle" dominant-baseline="central">
+<text x="180" y="267">WARNING</text>
+<text x="480" y="267">DANGER</text>
+<text x="780" y="267">WARNING</text>
+<text x="1080" y="267">DANGER</text>
+<text x="1380" y="267">WARNING</text>
+</g>
+<use href="#skull-mark" x="311" y="243" width="38" height="49"/>
+<use href="#skull-mark" x="611" y="243" width="38" height="49"/>
+<use href="#skull-mark" x="911" y="243" width="38" height="49"/>
+<use href="#skull-mark" x="1211" y="243" width="38" height="49"/>
+</g>
+  <!-- Fita superior: desce da esquerda para direita -->
+  <g transform="rotate(10.6 800 267.5)">
+<rect x="35" y="222" width="1530" height="91" fill="#ffdd12"/>
+<rect x="35" y="222" width="1530" height="13" fill="url(#hazard-stripes)"/>
+<rect x="35" y="300" width="1530" height="13" fill="url(#hazard-stripes)"/>
+<g fill="#111111" font-family="DejaVu Sans Condensed, Arial Narrow, Impact, sans-serif" font-size="46" font-weight="900" text-anchor="middle" dominant-baseline="central">
+<text x="180" y="267">WARNING</text>
+<text x="480" y="267">DANGER</text>
+<text x="780" y="267">WARNING</text>
+<text x="1080" y="267">DANGER</text>
+<text x="1380" y="267">WARNING</text>
+</g>
+<use href="#skull-mark" x="311" y="243" width="38" height="49"/>
+<use href="#skull-mark" x="611" y="243" width="38" height="49"/>
+<use href="#skull-mark" x="911" y="243" width="38" height="49"/>
+<use href="#skull-mark" x="1211" y="243" width="38" height="49"/>
+</g>
+</svg>
