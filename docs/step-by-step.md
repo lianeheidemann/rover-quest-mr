@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Partes 1 a 4 concluídas e validadas no S23 Ultra; próxima: Parte 5.  
+> **Status:** Partes 1 a 4 concluídas e validadas no S23 Ultra; Parte 5 implementada, aguardando validação no aparelho.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -84,11 +84,19 @@
 
 ### Parte 5 — Mapa de obstáculos
 
-- [ ] Converter profundidade em células ocupadas e livres, de forma estável.
-- [ ] Considerar o tamanho do rover ao marcar obstáculos.
-- [ ] Célula não observada continua desconhecida, nunca livre.
-- [ ] Sobreposição visual da grade para depuração.
-- [ ] Obstáculo manual continua disponível.
+- [x] Converter profundidade em células ocupadas e livres, de forma estável.
+- [x] Considerar o tamanho do rover ao marcar obstáculos.
+- [x] Célula não observada continua desconhecida, nunca livre.
+- [x] Sobreposição visual da grade para depuração.
+- [x] Obstáculo manual continua disponível.
+  - **Implementado, ainda não testado no S23 Ultra.** A profundidade vira pontos no frame da âncora
+    do piso (`core/depth/DepthProjection.kt`). Pontos entre 3 e 40 cm de altura votam "obstáculo";
+    pontos no piso (±2 cm) votam "livre"; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
+    mesa) não votam. Uma célula só muda de estado após 3 votos líquidos, com histerese
+    (`core/nav/ObstacleMap.kt`). Obstáculos reais são ampliados pelo raio do rover; o A* só atravessa
+    piso visto como livre e, se faltar ver parte do caminho, pede para apontar a câmera. Chip "Mapa":
+    verde = livre, vermelho = obstáculo visto, laranja = folga do rover ou obstáculo virtual. Sem
+    suporte a profundidade, só o obstáculo virtual bloqueia, com aviso.
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
