@@ -40,7 +40,9 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
-          TAG="v${VERSION}-build.${GITHUB_RUN_NUMBER}"
+          # Zero-padded so GitHub lists releases in build order (it sorts tags as text).
+          BUILD=$(printf '%04d' "$GITHUB_RUN_NUMBER")
+          TAG="v${VERSION}-build.${BUILD}"
           APK="RoverQuestMR-${TAG}.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           gh release create "$TAG" "$APK" --target "$GITHUB_SHA" \
