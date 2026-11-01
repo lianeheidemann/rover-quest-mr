@@ -2,6 +2,7 @@ package io.github.lianeheidemann.roverquest.ui
 
 import android.util.Log
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.google.ar.core.Frame
@@ -112,6 +113,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     }
     var lastRecording by remember { mutableStateOf(newestRecording(recordingsDir)) }
     var playbackFile by remember { mutableStateOf<File?>(null) }
+    var sessionGeneration by remember { mutableIntStateOf(0) }
     var diagnosticOn by remember { mutableStateOf(false) }
     var depthReport by remember { mutableStateOf(DepthReport(DepthQuality.WAITING)) }
     var coloredDepth by remember { mutableStateOf<ColoredDepth?>(null) }
@@ -198,11 +200,21 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         }
     }
 
-    // Switching sessions drops the old anchor, so the floor setup starts over.
-    fun leavePlayback() {
+    // A new AR session starts with no planes and no anchors, so everything tied to the old
+    // session (floor, rover, destination, depth) starts over.
+    fun forgetSession() {
+        if (recorder.state == ARRecorder.State.RECORDING) recorder.stop()
         restart()
-        playbackFile = null
+        floorDetected = false
+        reticleHit = null
+        trackingState = TrackingState.PAUSED
+        failureReason = null
         clearDepth()
+    }
+
+    fun leavePlayback() {
+        forgetSession()
+        playbackFile = null
     }
 
     fun toggleReplay() {
@@ -210,11 +222,16 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             leavePlayback()
         } else {
             val file = lastRecording ?: return
-            if (recorder.state == ARRecorder.State.RECORDING) recorder.stop()
-            restart()
-            clearDepth()
+            forgetSession()
             playbackFile = file
         }
+    }
+
+    /** Drops every detected floor and starts scanning again, for when ARCore picked a bad area. */
+    fun chooseNewArea() {
+        forgetSession()
+        sessionGeneration++
+        Log.i(TAG, "Scanning a new area")
     }
 
     val hint = setupHint(
@@ -227,8 +244,9 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // A new session is needed to switch between live camera and a recorded session.
-        key(playbackFile) {
+        // A new session is needed to switch between live camera and a recorded session, and to
+        // forget the detected floor ("Escolher outra área"): ARCore cannot drop planes otherwise.
+        key(playbackFile, sessionGeneration) {
             ARSceneView(
                 modifier = Modifier
                     .fillMaxSize()
@@ -401,6 +419,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             onRemoveObstacle = { setup = setup.withoutObstacle() },
             showRestart = setup.roverPlaced,
             onRestart = ::restart,
+            showNewArea = playbackFile == null,
+            onNewArea = ::chooseNewArea,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
@@ -442,6 +462,8 @@ private fun SetupPanel(
     onRemoveObstacle: () -> Unit,
     showRestart: Boolean,
     onRestart: () -> Unit,
+    showNewArea: Boolean,
+    onNewArea: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val background = if (warning) Color(0xFFB71C1C) else Color.Black
@@ -490,6 +512,11 @@ private fun SetupPanel(
             }
             if (showRestart) {
                 Button(onClick = onRestart) { Text("Recomeçar") }
+            }
+        }
+        if (showNewArea) {
+            TextButton(onClick = onNewArea) {
+                Text("Escolher outra área", color = Color(0xFF81D4FA))
             }
         }
     }
