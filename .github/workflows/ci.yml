@@ -1,9 +1,9 @@
 name: CI
 
 on:
+  # Runs on every PR: `build` is a required check on main, so it must always report.
   pull_request:
     branches: [main]
-    paths-ignore: ['docs/**', 'assets/**', '**.md']
   # Every merge to main publishes a release with the APK, even for docs-only changes.
   push:
     branches: [main]

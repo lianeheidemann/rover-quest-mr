@@ -33,7 +33,7 @@
 - [ ] Sessão AR com câmera funcionando no S23 Ultra.
 - [ ] Verificar no aparelho se a profundidade do ARCore é suportada e registrar o resultado.
 - [ ] Mensagens claras para permissão negada e AR indisponível.
-- [x] Comandos de build/teste no `AGENTS.md` e CI que compila e roda os testes: só em PR para a `main` e após o merge nela (para a badge), ignorando mudanças em `docs/`, `assets/` e `*.md`, com cache do Gradle.
+- [x] Comandos de build/teste no `AGENTS.md` e CI que compila e roda os testes: em todo PR para a `main` e após cada merge nela, com cache do Gradle.
 
 **Concluído quando:** o APK instala via `adb`, abre a sessão AR no aparelho e o suporte a profundidade está documentado.
 
