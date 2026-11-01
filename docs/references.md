@@ -1,6 +1,6 @@
 # Referências
 
-Documentação consultada no desenvolvimento do RoverQuest MR. Para o SceneView, use sempre a documentação e o `llms.txt` da versão instalada.
+Documentação consultada no desenvolvimento do RoverQuest. Para o SceneView, use sempre a documentação e o `llms.txt` da versão instalada.
 
 ## ARCore
 

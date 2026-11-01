@@ -2,11 +2,11 @@
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roverquest-app-icon-dark.png">
     <source media="(prefers-color-scheme: light)" srcset="assets/readme/roverquest-app-icon-ligth.png">
-    <img src="assets/readme/roverquest-app-icon-ligth.png" alt="Ícone do app RoverQuest MR" width="15%">
+    <img src="assets/readme/roverquest-app-icon-ligth.png" alt="Ícone do app RoverQuest" width="15%">
   </picture>
 </p>
 
-<h1 align="center">RoverQuest MR</h1>
+<h1 align="center">RoverQuest</h1>
 
 <p align="center">
   <img src="assets/badge/badge_em-construcao-azul-v1.svg">
@@ -47,7 +47,7 @@ Sua casa vira a fase. Caixas, livros e almofadas de verdade se tornam obstáculo
 ## Versão beta
 
 <p align="center">
-  <img width="30%" src="https://github.com/lianeheidemann/readme-components/blob/develop/material/my-creations/image/cute-bunny-v1.png" ><img src="assets/interface/interface-v1.webp" alt="Versão beta do RoverQuest MR: piso detectado, rover e destino posicionados e rota desviando de um obstáculo virtual" width="40%">
+  <img width="30%" src="https://github.com/lianeheidemann/readme-components/blob/develop/material/my-creations/image/cute-bunny-v1.png" ><img src="assets/interface/interface-v1.webp" alt="Versão beta do RoverQuest: piso detectado, rover e destino posicionados e rota desviando de um obstáculo virtual" width="40%">
 </p>
 
 > **Já funciona:** detecção do piso, rover e destino por toque, rota com A* e desvio de obstáculo virtual.  

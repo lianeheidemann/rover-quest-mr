@@ -32,7 +32,7 @@ jobs:
         run: |
           SLUG=$(printf '%s' "$BRANCH" | tr -c 'A-Za-z0-9._-' '-')
           TAG="test-${SLUG}"
-          APK="RoverQuestMR-${SLUG}.apk"
+          APK="RoverQuest-${SLUG}.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           # One test release per branch, replaced on every build.
           gh release delete "$TAG" --yes --cleanup-tag || true

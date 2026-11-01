@@ -1,6 +1,6 @@
-# RoverQuest MR — código do jogo
+# RoverQuest — código do jogo
 
-Projeto Android (Kotlin + Gradle) do RoverQuest MR. Visão geral do jogo no [README principal](../README.md).
+Projeto Android (Kotlin + Gradle) do RoverQuest. Visão geral do jogo no [README principal](../README.md).
 
 ## Requisitos
 
@@ -173,4 +173,4 @@ APKs prontos para instalar ficam em [Releases](https://github.com/lianeheidemann
 
 Para testar outra branch (ex.: `develop`) sem merge: **Actions → APK de teste → Run workflow**, escolha a branch. O APK aparece em Releases como `<branch> (teste)`, substituído a cada build.
 
-APK de teste mais recente da `develop` (link fixo): [RoverQuestMR-develop.apk](https://github.com/lianeheidemann/rover-quest-mr/releases/download/test-develop/RoverQuestMR-develop.apk). Para outra branch, troque `develop` pelo nome dela (com `/` trocado por `-`) nas duas partes do link.
+APK de teste mais recente da `develop` (link fixo): [RoverQuest-develop.apk](https://github.com/lianeheidemann/rover-quest-mr/releases/download/test-develop/RoverQuest-develop.apk). Para outra branch, troque `develop` pelo nome dela (com `/` trocado por `-`) nas duas partes do link.

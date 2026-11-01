@@ -1,4 +1,4 @@
-# RoverQuest MR — Guia de implementação passo a passo
+# RoverQuest — Guia de implementação passo a passo
 
 > **Status:** Partes 1 a 4 validadas no S23 Ultra; Partes 5 e 6 implementadas, aguardando validação no aparelho.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  

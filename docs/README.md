@@ -1,6 +1,6 @@
 # Documentação
 
-Documentos de planejamento e referência do RoverQuest MR.
+Documentos de planejamento e referência do RoverQuest.
 
 | Arquivo | Conteúdo |
 | --- | --- |

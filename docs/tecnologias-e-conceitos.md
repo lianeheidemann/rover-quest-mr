@@ -1,6 +1,6 @@
-# Tecnologias e conceitos do RoverQuest MR
+# Tecnologias e conceitos do RoverQuest
 
-O **RoverQuest MR** é um jogo Android em que um rover virtual é colocado no piso, recebe um destino e precisa encontrar uma rota. A ideia de **realidade misturada** é fazer essa rota considerar também o ambiente físico, como uma caixa real no caminho — não apenas objetos desenhados na tela.
+O **RoverQuest** é um jogo Android em que um rover virtual é colocado no piso, recebe um destino e precisa encontrar uma rota. A ideia de **realidade misturada** é fazer essa rota considerar também o ambiente físico, como uma caixa real no caminho — não apenas objetos desenhados na tela.
 
 Para entender o projeto, vale seguir o processo: **localizar o celular, descobrir onde o jogador tocou, fixar o rover no espaço, interpretar obstáculos e calcular a rota**.
 
