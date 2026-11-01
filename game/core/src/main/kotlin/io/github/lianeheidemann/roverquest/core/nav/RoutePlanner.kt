@@ -30,7 +30,7 @@ fun newObstacleMap(): ObstacleMap = ObstacleMap(ROUTE_CELL_SIZE, FloorSetup.PLAY
  * The spots under the rover and the destination count as free floor: both were placed on the
  * detected floor. Without a map every cell stays unknown. The manual obstacle is always added.
  */
-fun buildGrid(setup: FloorSetup, map: ObstacleMap? = null): OccupancyGrid {
+fun buildGrid(setup: FloorSetup, map: ObstacleMap? = null, rover: FloorPoint = FloorPoint.ORIGIN): OccupancyGrid {
     val grid = OccupancyGrid(ROUTE_CELL_SIZE, FloorSetup.PLAY_AREA_HALF_SIZE)
     if (map != null) {
         require(map.size == grid.size) { "map and planning grid must match" }
@@ -54,7 +54,7 @@ fun buildGrid(setup: FloorSetup, map: ObstacleMap? = null): OccupancyGrid {
         }
         // Placed on the floor, so known free unless depth saw something right there. Done after
         // inflation: an obstacle next to the rover or the destination must not seal them in.
-        freeAround(grid, map, FloorPoint.ORIGIN)
+        freeAround(grid, map, rover)
         setup.destination?.let { freeAround(grid, map, it) }
     }
     setup.obstacle?.let { obstacle ->
@@ -77,24 +77,24 @@ private fun freeAround(grid: OccupancyGrid, map: ObstacleMap, point: FloorPoint)
 }
 
 /**
- * Plans a route from the rover to the destination, or returns `null` while the destination is
- * not placed.
+ * Plans a route from the rover (at [rover], the anchor origin until it drives) to the destination,
+ * or returns `null` while the destination is not placed.
  *
  * Without a depth [map] (depth unsupported), unknown cells are crossed as if free and only the
  * manual obstacle blocks the rover. With a map, the route only crosses floor that depth has seen
  * free; when that is not enough but a way through unseen cells exists, the result is
  * [RoutePlan.NeedsScan].
  */
-fun planRoute(setup: FloorSetup, map: ObstacleMap? = null): RoutePlan? {
+fun planRoute(setup: FloorSetup, map: ObstacleMap? = null, rover: FloorPoint = FloorPoint.ORIGIN): RoutePlan? {
     val destination = setup.destination ?: return null
     if (!setup.roverPlaced) return null
-    val grid = buildGrid(setup, map)
-    val start = grid.cellAt(FloorPoint.ORIGIN) ?: return RoutePlan.Blocked(NoPathReason.OUT_OF_GRID)
+    val grid = buildGrid(setup, map, rover)
+    val start = grid.cellAt(rover) ?: return RoutePlan.Blocked(NoPathReason.OUT_OF_GRID)
     val goal = grid.cellAt(destination) ?: return RoutePlan.Blocked(NoPathReason.OUT_OF_GRID)
 
     val strict = findPath(grid, start, goal, allowUnknown = map == null)
     return when (strict) {
-        is PathResult.Found -> toRoute(grid, strict.cells, destination)
+        is PathResult.Found -> toRoute(grid, strict.cells, rover, destination)
         is PathResult.NotFound -> {
             val throughUnknown = map != null && strict.reason == NoPathReason.UNREACHABLE &&
                 findPath(grid, start, goal, allowUnknown = true) is PathResult.Found
@@ -103,11 +103,11 @@ fun planRoute(setup: FloorSetup, map: ObstacleMap? = null): RoutePlan? {
     }
 }
 
-private fun toRoute(grid: OccupancyGrid, cells: List<Cell>, destination: FloorPoint): RoutePlan.Route {
+private fun toRoute(grid: OccupancyGrid, cells: List<Cell>, rover: FloorPoint, destination: FloorPoint): RoutePlan.Route {
     val corners = corners(cells).map(grid::centerOf)
     // Start and end exactly at the rover and the destination, not at cell centers.
     val inner = corners.drop(1).dropLast(1)
-    return RoutePlan.Route(listOf(FloorPoint.ORIGIN) + inner + destination)
+    return RoutePlan.Route(listOf(rover) + inner + destination)
 }
 
 /** Keeps the first and last cells and every cell where the direction changes. */

@@ -32,7 +32,8 @@ sealed interface PlacementResult {
 
 /**
  * Rover, destination and manual obstacle placed on the floor. The rover defines the floor anchor,
- * so it is always at [FloorPoint.ORIGIN]; everything else is stored relative to it.
+ * so it starts at [FloorPoint.ORIGIN]; everything else is stored relative to it. Once it drives,
+ * placement checks use its current position (`rover`).
  *
  * @param areaConfirmed the player accepted the detected floor area; nothing can be placed before.
  */
@@ -62,11 +63,11 @@ data class FloorSetup(
      * Places (or moves) the destination at the given offset from the floor anchor, in meters,
      * with `dy` pointing up from the floor.
      */
-    fun placeDestination(dx: Float, dy: Float, dz: Float): PlacementResult {
+    fun placeDestination(dx: Float, dy: Float, dz: Float, rover: FloorPoint = FloorPoint.ORIGIN): PlacementResult {
         floorPointOrRejection(dx, dy, dz)?.let { return PlacementResult.Rejected(it) }
         val point = FloorPoint(dx, dz)
         return when {
-            point.distanceTo(FloorPoint.ORIGIN) < MIN_DESTINATION_DISTANCE ->
+            point.distanceTo(rover) < MIN_DESTINATION_DISTANCE ->
                 PlacementResult.Rejected(PlacementRejection.TOO_CLOSE)
             obstacle?.let { obstacleBlocks(it, point) } == true ->
                 PlacementResult.Rejected(PlacementRejection.BLOCKED_BY_OBSTACLE)
@@ -75,11 +76,11 @@ data class FloorSetup(
     }
 
     /** Places (or moves) the manual test obstacle; same coordinates as [placeDestination]. */
-    fun placeObstacle(dx: Float, dy: Float, dz: Float): PlacementResult {
+    fun placeObstacle(dx: Float, dy: Float, dz: Float, rover: FloorPoint = FloorPoint.ORIGIN): PlacementResult {
         floorPointOrRejection(dx, dy, dz)?.let { return PlacementResult.Rejected(it) }
         val point = FloorPoint(dx, dz)
         return when {
-            obstacleBlocks(point, FloorPoint.ORIGIN) ->
+            obstacleBlocks(point, rover) ->
                 PlacementResult.Rejected(PlacementRejection.COVERS_ROVER)
             destination?.let { obstacleBlocks(point, it) } == true ->
                 PlacementResult.Rejected(PlacementRejection.COVERS_DESTINATION)
@@ -137,6 +138,8 @@ enum class SetupHint {
     NEEDS_SCAN,
     NO_ROUTE,
     READY,
+    DRIVING,
+    ARRIVED,
 }
 
 /**
@@ -148,6 +151,8 @@ enum class SetupHint {
  * @param aimingAtFloor the placement reticle currently hits a floor surface.
  * @param routeBlocked rover and destination are placed but no route connects them.
  * @param routeNeedsScan a route may exist, but part of the way was never observed.
+ * @param driving the rover is moving along the route.
+ * @param arrived the rover reached the destination.
  */
 fun setupHint(
     setup: FloorSetup,
@@ -157,12 +162,16 @@ fun setupHint(
     aimingAtFloor: Boolean,
     routeBlocked: Boolean = false,
     routeNeedsScan: Boolean = false,
+    driving: Boolean = false,
+    arrived: Boolean = false,
 ): SetupHint = when {
     setup.roverPlaced && anchorStopped -> SetupHint.ANCHOR_LOST
     !cameraTracking -> SetupHint.TRACKING_LOST
     setup.phase == SetupPhase.READY -> when {
+        arrived -> SetupHint.ARRIVED
         routeBlocked -> SetupHint.NO_ROUTE
         routeNeedsScan -> SetupHint.NEEDS_SCAN
+        driving -> SetupHint.DRIVING
         else -> SetupHint.READY
     }
     !floorDetected -> SetupHint.SCAN_FLOOR
@@ -183,8 +192,11 @@ fun headingDegrees(from: FloorPoint, to: FloorPoint): Float {
     return Math.toDegrees(kotlin.math.atan2(-dx, -dz).toDouble()).toFloat()
 }
 
-/** Where the rover should face: the first turn of the route, else the destination, else ahead. */
-fun roverHeading(setup: FloorSetup, routePoints: List<FloorPoint>?): Float {
+/**
+ * Where the rover standing at [from] should face: the first turn of the route, else the
+ * destination, else ahead.
+ */
+fun roverHeading(setup: FloorSetup, routePoints: List<FloorPoint>?, from: FloorPoint = FloorPoint.ORIGIN): Float {
     val target = routePoints?.getOrNull(1) ?: setup.destination ?: return 0f
-    return headingDegrees(FloorPoint.ORIGIN, target)
+    return headingDegrees(from, target)
 }
