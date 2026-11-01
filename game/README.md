@@ -30,16 +30,11 @@ A dependência é em um sentido só: `:app` usa `:core`; `:core` nunca conhece A
 ```mermaid
 ---
 config:
-  theme: base
   flowchart:
     curve: basis
     nodeSpacing: 40
     rankSpacing: 50
     padding: 16
-  themeVariables:
-    fontFamily: "Inter, Segoe UI, Roboto, sans-serif"
-    fontSize: 14px
-    lineColor: "#94A3B8"
 ---
 flowchart LR
     subgraph app [":app · Android"]
@@ -64,12 +59,14 @@ flowchart LR
     class startup,floor,nav kotlin
     class ARCore external
 
-    classDef android fill:#E8F8EF,stroke:#3DDC84,stroke-width:2px,color:#0F3D24
-    classDef kotlin fill:#F1ECFF,stroke:#7F52FF,stroke-width:2px,color:#2B1A66
-    classDef external fill:#F1F5F9,stroke:#94A3B8,stroke-width:1px,stroke-dasharray:4 3,color:#334155
-    classDef start fill:#0F172A,stroke:#0F172A,color:#FFFFFF
-    style app fill:#F6FDF9,stroke:#3DDC84,stroke-width:1px,color:#0F3D24
-    style core fill:#FAF8FF,stroke:#7F52FF,stroke-width:1px,color:#2B1A66
+    %% Translucent fills and no fixed text color: GitHub picks the light or dark
+    %% Mermaid theme from the viewer's setting, and these colors work on both.
+    classDef android fill:#3DDC8433,stroke:#3DDC84,stroke-width:2px
+    classDef kotlin fill:#7F52FF33,stroke:#7F52FF,stroke-width:2px
+    classDef external fill:#94A3B81F,stroke:#94A3B8,stroke-width:1px,stroke-dasharray:4 3
+    classDef start fill:#F5A62340,stroke:#F5A623,stroke-width:2px
+    style app fill:#3DDC8414,stroke:#3DDC84,stroke-width:1px
+    style core fill:#7F52FF14,stroke:#7F52FF,stroke-width:1px
 ```
 
 ## Arquitetura
@@ -105,16 +102,11 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 ```mermaid
 ---
 config:
-  theme: base
   flowchart:
     curve: basis
     nodeSpacing: 40
     rankSpacing: 50
     padding: 16
-  themeVariables:
-    fontFamily: "Inter, Segoe UI, Roboto, sans-serif"
-    fontSize: 14px
-    lineColor: "#94A3B8"
 ---
 flowchart TD
     T(["👆 Toque na tela"])
@@ -136,12 +128,14 @@ flowchart TD
     class R,C,D android
     class F,P,G,A kotlin
 
-    classDef android fill:#E8F8EF,stroke:#3DDC84,stroke-width:2px,color:#0F3D24
-    classDef kotlin fill:#F1ECFF,stroke:#7F52FF,stroke-width:2px,color:#2B1A66
-    classDef external fill:#F1F5F9,stroke:#94A3B8,stroke-width:1px,stroke-dasharray:4 3,color:#334155
-    classDef start fill:#0F172A,stroke:#0F172A,color:#FFFFFF
-    style app fill:#F6FDF9,stroke:#3DDC84,stroke-width:1px,color:#0F3D24
-    style core fill:#FAF8FF,stroke:#7F52FF,stroke-width:1px,color:#2B1A66
+    %% Translucent fills and no fixed text color: GitHub picks the light or dark
+    %% Mermaid theme from the viewer's setting, and these colors work on both.
+    classDef android fill:#3DDC8433,stroke:#3DDC84,stroke-width:2px
+    classDef kotlin fill:#7F52FF33,stroke:#7F52FF,stroke-width:2px
+    classDef external fill:#94A3B81F,stroke:#94A3B8,stroke-width:1px,stroke-dasharray:4 3
+    classDef start fill:#F5A62340,stroke:#F5A623,stroke-width:2px
+    style app fill:#3DDC8414,stroke:#3DDC84,stroke-width:1px
+    style core fill:#7F52FF14,stroke:#7F52FF,stroke-width:1px
 ```
 
 ### Princípios
