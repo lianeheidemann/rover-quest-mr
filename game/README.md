@@ -28,20 +28,48 @@ As versões das dependências ficam em [`gradle/libs.versions.toml`](gradle/libs
 A dependência é em um sentido só: `:app` usa `:core`; `:core` nunca conhece Android nem ARCore.
 
 ```mermaid
+---
+config:
+  theme: base
+  flowchart:
+    curve: basis
+    nodeSpacing: 40
+    rankSpacing: 50
+    padding: 16
+  themeVariables:
+    fontFamily: "Inter, Segoe UI, Roboto, sans-serif"
+    fontSize: 14px
+    lineColor: "#94A3B8"
+---
 flowchart LR
-    subgraph app [":app — Android"]
-        Main[MainActivity] --> App[RoverQuestApp] --> Ar[ArScreen]
+    subgraph app [":app · Android"]
+        direction TB
+        Main("MainActivity") --> App("RoverQuestApp") --> Ar("ArScreen")
     end
-    subgraph core [":core — Kotlin puro"]
-        startup
-        floor
-        nav
+    subgraph core [":core · Kotlin puro"]
+        direction TB
+        startup("startup")
+        floor("floor")
+        nav("nav")
     end
+    ARCore[("ARCore + SceneView")]
+
     App --> startup
     Ar --> floor
     Ar --> nav
     nav --> floor
-    Ar -.-> ARCore[(ARCore + SceneView)]
+    Ar -.-> ARCore
+
+    class Main,App,Ar android
+    class startup,floor,nav kotlin
+    class ARCore external
+
+    classDef android fill:#E8F8EF,stroke:#3DDC84,stroke-width:2px,color:#0F3D24
+    classDef kotlin fill:#F1ECFF,stroke:#7F52FF,stroke-width:2px,color:#2B1A66
+    classDef external fill:#F1F5F9,stroke:#94A3B8,stroke-width:1px,stroke-dasharray:4 3,color:#334155
+    classDef start fill:#0F172A,stroke:#0F172A,color:#FFFFFF
+    style app fill:#F6FDF9,stroke:#3DDC84,stroke-width:1px,color:#0F3D24
+    style core fill:#FAF8FF,stroke:#7F52FF,stroke-width:1px,color:#2B1A66
 ```
 
 ## Arquitetura
@@ -75,26 +103,45 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 ### Fluxo de um toque
 
 ```mermaid
+---
+config:
+  theme: base
+  flowchart:
+    curve: basis
+    nodeSpacing: 40
+    rankSpacing: 50
+    padding: 16
+  themeVariables:
+    fontFamily: "Inter, Segoe UI, Roboto, sans-serif"
+    fontSize: 14px
+    lineColor: "#94A3B8"
+---
 flowchart TD
-    T([Toque na tela]) --> R["ReticleNode<br/>acerto no piso (ARCore)"]
-    R --> C["ArScreen<br/>converte para coordenadas da âncora do piso"]
-    C --> F["FloorSetup<br/>placeDestination / placeObstacle"]
-    F --> P["planRoute"]
-    P --> G["OccupancyGrid"]
-    G --> A["findPath (A*)"]
-    A --> D["ArScreen<br/>desenha a rota e mostra o aviso"]
+    T(["👆 Toque na tela"])
+    subgraph app [":app · Android"]
+        R("ReticleNode<br/>acerto no piso · ARCore")
+        C("ArScreen<br/>coordenadas da âncora do piso")
+        D("ArScreen<br/>desenha a rota e o aviso")
+    end
+    subgraph core [":core · Kotlin puro"]
+        F("FloorSetup<br/>placeDestination · placeObstacle")
+        P("planRoute")
+        G("OccupancyGrid")
+        A("findPath · A*")
+    end
 
-    subgraph core [":core — Kotlin puro"]
-        F
-        P
-        G
-        A
-    end
-    subgraph app [":app — Android"]
-        R
-        C
-        D
-    end
+    T --> R --> C --> F --> P --> G --> A --> D
+
+    class T start
+    class R,C,D android
+    class F,P,G,A kotlin
+
+    classDef android fill:#E8F8EF,stroke:#3DDC84,stroke-width:2px,color:#0F3D24
+    classDef kotlin fill:#F1ECFF,stroke:#7F52FF,stroke-width:2px,color:#2B1A66
+    classDef external fill:#F1F5F9,stroke:#94A3B8,stroke-width:1px,stroke-dasharray:4 3,color:#334155
+    classDef start fill:#0F172A,stroke:#0F172A,color:#FFFFFF
+    style app fill:#F6FDF9,stroke:#3DDC84,stroke-width:1px,color:#0F3D24
+    style core fill:#FAF8FF,stroke:#7F52FF,stroke-width:1px,color:#2B1A66
 ```
 
 ### Princípios
