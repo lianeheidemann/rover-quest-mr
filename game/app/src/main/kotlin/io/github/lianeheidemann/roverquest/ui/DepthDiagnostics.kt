@@ -6,8 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.ar.core.Frame
 import io.github.lianeheidemann.roverquest.core.depth.ColoredDepth
@@ -86,7 +85,7 @@ fun DepthOverlay(colored: ColoredDepth, modifier: Modifier = Modifier) {
     )
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/** Two short lines: the reading at the screen center and a legend, with small recording buttons. */
 @Composable
 fun DiagnosticPanel(
     report: DepthReport,
@@ -102,66 +101,68 @@ fun DiagnosticPanel(
     val ok = report.quality == DepthQuality.GOOD
     Column(
         modifier = modifier
-            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(2.dp),
+            .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(14.dp))
+            .padding(start = 12.dp, end = 6.dp, top = 2.dp, bottom = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp),
     ) {
-        Text(centerLabel(report), color = Color.White, style = MaterialTheme.typography.titleSmall)
-        Text(
-            qualityLabel(report),
-            color = if (ok) Color(0xFFA5D6A7) else Color(0xFFFFD54F),
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Text(
-            "vermelho = perto · azul = longe · $supportText",
-            color = Color.White.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.labelSmall,
-        )
-        if (playingBack) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                "Repetindo a gravação (sem câmera ao vivo)",
-                color = Color(0xFF81D4FA),
-                style = MaterialTheme.typography.labelSmall,
+                buildString {
+                    append(centerLabel(report))
+                    append(" · ")
+                },
+                color = Color.White,
+                style = MaterialTheme.typography.labelLarge,
+                maxLines = 1,
             )
-        }
-        if (recordingError != null) {
             Text(
-                "Falha na gravação: $recordingError",
-                color = Color(0xFFFFD54F),
-                style = MaterialTheme.typography.labelSmall,
+                qualityLabel(report),
+                color = if (ok) Color(0xFFA5D6A7) else Color(0xFFFFD54F),
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f, fill = false),
             )
-        }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)) {
             if (!playingBack) {
-                CompactChip(if (recording) "● Parar gravação" else "Gravar sessão", recording, onClick = onToggleRecording)
+                CompactChip(if (recording) "■ Parar" else "● Gravar", recording, onClick = onToggleRecording)
             }
             if (playingBack || (canReplay && !recording)) {
-                CompactChip(if (playingBack) "Voltar ao vivo" else "Repetir gravação", playingBack, onClick = onToggleReplay)
+                CompactChip(if (playingBack) "Ao vivo" else "Repetir", playingBack, onClick = onToggleReplay)
             }
         }
+        val extra = when {
+            recordingError != null -> "Falha na gravação: $recordingError"
+            playingBack -> "Repetindo a gravação (sem câmera ao vivo)"
+            else -> null
+        }
+        Text(
+            extra ?: "vermelho perto · azul longe · $supportText",
+            color = if (extra != null) Color(0xFFFFD54F) else Color.White.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.labelSmall,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
 private fun centerLabel(report: DepthReport): String {
     val center = report.center
-    val meters = center?.meters ?: return "Centro: sem leitura"
+    val meters = center?.meters ?: return "sem leitura"
     val distance = String.format(PT_BR, "%.2f m", meters)
-    val confidence = center.confidence?.let { " · confiança ${percent(it)}" }.orEmpty()
-    return "Centro: $distance$confidence"
+    val confidence = center.confidence?.let { " · ${percent(it)}" }.orEmpty()
+    return "$distance$confidence"
 }
 
 private fun qualityLabel(report: DepthReport): String = when (report.quality) {
-    DepthQuality.NOT_SUPPORTED -> "Sem profundidade neste aparelho: use o obstáculo virtual."
-    DepthQuality.WAITING -> "Aguardando: mova o celular devagar."
-    DepthQuality.GOOD -> "Leitura confiável · cobertura ${percent(report.coverage)}"
+    DepthQuality.NOT_SUPPORTED -> "sem profundidade"
+    DepthQuality.WAITING -> "mova o celular"
+    DepthQuality.GOOD -> "confiável"
     DepthQuality.UNCERTAIN -> when (report.issue) {
-        DepthIssue.LOW_COVERAGE -> "Incerta: pouca área lida (${percent(report.coverage)})"
-        DepthIssue.NO_DATA_AT_CENTER -> "Incerta: sem dado no centro"
-        DepthIssue.LOW_CONFIDENCE -> "Incerta: baixa confiança no centro"
-        DepthIssue.OUT_OF_RANGE -> "Incerta: fora de 0,3–5 m"
-        null -> "Leitura incerta"
+        DepthIssue.LOW_COVERAGE -> "incerta: pouca área"
+        DepthIssue.NO_DATA_AT_CENTER -> "incerta: sem dado"
+        DepthIssue.LOW_CONFIDENCE -> "incerta: baixa confiança"
+        DepthIssue.OUT_OF_RANGE -> "incerta: fora de 0,3–5 m"
+        null -> "incerta"
     }
 }
 

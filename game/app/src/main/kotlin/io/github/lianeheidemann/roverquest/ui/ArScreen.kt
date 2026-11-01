@@ -41,6 +41,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Row
@@ -588,9 +590,9 @@ private fun StatusBar(
     Row(
         modifier = Modifier
             .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
-            .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            .padding(start = 12.dp, end = 2.dp, top = 2.dp, bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Box(
             modifier = Modifier
@@ -601,7 +603,7 @@ private fun StatusBar(
         Text(
             trackingText,
             color = Color.White,
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier
@@ -634,16 +636,16 @@ private fun StatusBar(
 
 /** Round icon button that turns purple while its option is on. */
 @Composable
-private fun IconToggle(icon: Int, description: String, selected: Boolean, onClick: () -> Unit) {
+fun IconToggle(icon: Int, description: String, selected: Boolean, onClick: () -> Unit) {
     IconButton(
         onClick = onClick,
-        modifier = Modifier.size(40.dp),
+        modifier = Modifier.size(36.dp),
         colors = IconButtonDefaults.iconButtonColors(
             containerColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
             contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else Color.White,
         ),
     ) {
-        Icon(painterResource(icon), contentDescription = description, modifier = Modifier.size(22.dp))
+        Icon(painterResource(icon), contentDescription = description, modifier = Modifier.size(20.dp))
     }
 }
 
@@ -670,16 +672,16 @@ private fun SetupPanel(
         modifier = modifier
             .navigationBarsPadding()
             .padding(horizontal = 12.dp, vertical = 8.dp)
-            .background(background.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .background(background.copy(alpha = 0.6f), RoundedCornerShape(18.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Text(
             hintText,
             color = Color.White,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyLarge,
+            style = MaterialTheme.typography.bodyMedium,
         )
         listOfNotNull(noteText, rejectionText).forEach { line ->
             Text(
@@ -691,48 +693,52 @@ private fun SetupPanel(
         }
 
         if (confirmingArea) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = onNewArea) {
-                    Icon(painterResource(R.drawable.ic_new_area), contentDescription = null, tint = Color.White)
-                    Text("Outra área", color = Color.White, modifier = Modifier.padding(start = 8.dp))
+            val compact = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedButton(onClick = onNewArea, contentPadding = compact, modifier = Modifier.height(36.dp)) {
+                    Icon(painterResource(R.drawable.ic_new_area), contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Text("Outra área", color = Color.White, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
                 }
-                Button(onClick = onConfirmArea) {
-                    Icon(painterResource(R.drawable.ic_confirm), contentDescription = null)
-                    Text("Confirmar", modifier = Modifier.padding(start = 8.dp))
-                }
-            }
-        }
-
-        if (tapMode != null) {
-            // What a tap places on the floor: exactly one is active.
-            SingleChoiceSegmentedButtonRow {
-                val options = listOf(
-                    Triple(TapMode.DESTINATION, R.drawable.ic_destination, "Destino"),
-                    Triple(TapMode.OBSTACLE, R.drawable.ic_obstacle, "Obstáculo"),
-                )
-                options.forEachIndexed { index, (mode, icon, label) ->
-                    SegmentedButton(
-                        selected = tapMode == mode,
-                        onClick = { onTapModeChange(mode) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
-                        icon = { Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
-                        colors = SegmentedButtonDefaults.colors(
-                            activeContainerColor = MaterialTheme.colorScheme.primary,
-                            activeContentColor = MaterialTheme.colorScheme.onPrimary,
-                            activeBorderColor = MaterialTheme.colorScheme.primary,
-                            inactiveContainerColor = Color.Black.copy(alpha = 0.35f),
-                            inactiveContentColor = Color.White,
-                            inactiveBorderColor = Color.White.copy(alpha = 0.6f),
-                        ),
-                    ) { Text(label) }
+                Button(onClick = onConfirmArea, contentPadding = compact, modifier = Modifier.height(36.dp)) {
+                    Icon(painterResource(R.drawable.ic_confirm), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text("Confirmar", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
                 }
             }
         }
 
-        if (hasObstacle || showRestart) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (hasObstacle) CompactChip("Tirar obstáculo", selected = false, icon = R.drawable.ic_remove, onClick = onRemoveObstacle)
-                if (showRestart) CompactChip("Recomeçar", selected = false, icon = R.drawable.ic_restart, onClick = onRestart)
+        if (tapMode != null || hasObstacle || showRestart) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (tapMode != null) {
+                    // What a tap places on the floor: exactly one is active.
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.padding(end = 4.dp)) {
+                        val options = listOf(
+                            Triple(TapMode.DESTINATION, R.drawable.ic_destination, "Destino"),
+                            Triple(TapMode.OBSTACLE, R.drawable.ic_obstacle, "Obstáculo"),
+                        )
+                        options.forEachIndexed { index, (mode, icon, label) ->
+                            SegmentedButton(
+                                selected = tapMode == mode,
+                                onClick = { onTapModeChange(mode) },
+                                shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                                modifier = Modifier.height(36.dp),
+                                icon = { Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(16.dp)) },
+                                colors = SegmentedButtonDefaults.colors(
+                                    activeContainerColor = MaterialTheme.colorScheme.primary,
+                                    activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                                    activeBorderColor = MaterialTheme.colorScheme.primary,
+                                    inactiveContainerColor = Color.Black.copy(alpha = 0.35f),
+                                    inactiveContentColor = Color.White,
+                                    inactiveBorderColor = Color.White.copy(alpha = 0.6f),
+                                ),
+                            ) { Text(label, style = MaterialTheme.typography.labelLarge) }
+                        }
+                    }
+                }
+                if (hasObstacle) IconToggle(R.drawable.ic_remove, "Tirar obstáculo", selected = false, onClick = onRemoveObstacle)
+                if (showRestart) IconToggle(R.drawable.ic_restart, "Recomeçar", selected = false, onClick = onRestart)
             }
         }
     }
@@ -779,18 +785,18 @@ private fun depthLabel(support: DepthSupport): String = when (support) {
 }
 
 private fun hintLabel(hint: SetupHint, blocked: NoPathReason?): String = when (hint) {
-    SetupHint.TRACKING_LOST -> "Rastreamento perdido: aponte para o piso, devagar."
-    SetupHint.ANCHOR_LOST -> "O rover se perdeu. Toque em Recomeçar."
+    SetupHint.TRACKING_LOST -> "Rastreamento perdido: aponte para o piso."
+    SetupHint.ANCHOR_LOST -> "O rover se perdeu: toque em ↻."
     SetupHint.SCAN_FLOOR -> "Mova o celular devagar sobre o piso."
     SetupHint.CONFIRM_AREA -> "Piso encontrado. Quer jogar nesta área?"
-    SetupHint.AIM_AT_FLOOR -> "Mire o círculo nos pontos do piso."
+    SetupHint.AIM_AT_FLOOR -> "Mire o círculo no piso pontilhado."
     SetupHint.TAP_TO_PLACE_ROVER -> "Toque para colocar o rover."
     SetupHint.TAP_TO_PLACE_DESTINATION -> "Toque para marcar o destino."
-    SetupHint.NEEDS_SCAN -> "Aponte a câmera para o caminho até o destino."
+    SetupHint.NEEDS_SCAN -> "Aponte a câmera para o caminho."
     SetupHint.NO_ROUTE -> when (blocked) {
-        NoPathReason.START_BLOCKED -> "O rover está cercado: tire o obstáculo de perto dele."
-        NoPathReason.GOAL_BLOCKED -> "O destino está num obstáculo: mova o destino."
-        else -> "Sem caminho: mova o obstáculo ou o destino."
+        NoPathReason.START_BLOCKED -> "Rover cercado: afaste o obstáculo."
+        NoPathReason.GOAL_BLOCKED -> "Destino num obstáculo: mova o destino."
+        else -> "Sem caminho: mova obstáculo ou destino."
     }
     SetupHint.READY -> "Rota calculada."
 }
