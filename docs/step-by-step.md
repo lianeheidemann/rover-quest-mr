@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Parte 1 concluída e validada no S23 Ultra; Partes 2 e 3 implementadas, aguardando validação no aparelho.  
+> **Status:** Partes 1, 2 e 3 concluídas e validadas no S23 Ultra; próxima: Parte 4.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -44,7 +44,8 @@
 - [x] Tocar para posicionar o rover (forma simples) e o destino.
 - [x] Manter ambos fixos ao piso enquanto o celular se move.
 - [x] Indicar quando o rastreamento é perdido.
-  - **Implementado, ainda não testado no S23 Ultra.** O rover cria a âncora do piso e o destino fica
+  - **Validado no S23 Ultra:** piso detectado, rover e destino posicionados por toque e mantidos no
+    lugar ao andar ao redor e ver de outros ângulos. O rover cria a âncora do piso e o destino fica
     relativo a ela; regras de posicionamento e avisos em `:core` (`core/floor/FloorSetup.kt`).
 
 **Concluído quando:** rover e destino permanecem alinhados ao piso ao movimentar o celular.
@@ -56,7 +57,8 @@
 - [x] A* no módulo `:core`, tratando ausência de rota.
 - [x] Exibir a rota sobre o piso.
 - [x] Testes JUnit da lógica.
-  - **Implementado, ainda não testado no S23 Ultra.** Grade de 5 cm em 5 × 5 m centrada no rover
+  - **Validado no S23 Ultra:** a rota em pontos contorna o obstáculo virtual e continua presa ao piso
+    vista de vários ângulos. Grade de 5 cm em 5 × 5 m centrada no rover
     (`core/nav/`); A* com 8 vizinhos, sem cortar quinas. O obstáculo manual é uma caixa virtual de
     30 cm, ampliada pelo raio do rover na grade. Sem profundidade ainda, as células desconhecidas são
     atravessadas como livres; só o obstáculo manual bloqueia.
@@ -135,4 +137,4 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 - [SceneView — Android AR, exemplos e `llms.txt`](https://github.com/sceneview/sceneview)
 - [Jetpack Compose](https://developer.android.com/compose)
 
-> **Próxima ação:** executar **apenas a Parte 1**. Não implementar todas as partes ao mesmo tempo.
+> **Próxima ação:** executar **apenas a Parte 4**. Não implementar todas as partes ao mesmo tempo.
