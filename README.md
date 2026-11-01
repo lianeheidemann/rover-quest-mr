@@ -1,3 +1,5 @@
-# RoverQuest MR
+<h1 align="center">RoverQuest MR</h1>
 
-Jogo educativo de robótica em realidade aumentada para Android, no qual um rover virtual planeja rotas e desvia de obstáculos físicos detectados a partir de dados de profundidade.
+<p align="center">
+  Jogo educativo de robótica em realidade aumentada para Android, no qual um rover virtual planeja rotas e desvia de obstáculos físicos detectados a partir de dados de profundidade.
+</p>
