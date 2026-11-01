@@ -7,11 +7,9 @@
 <p align="center">
   <img src="assets/badge/badge_em-construcao-azul-v1.svg">
   <br>
-  <br><img width="100%" alt="Faixa de aviso" src="assets/fun/caution-tape/caution-tape-larga-v4.svg" />
-</p>
-
-<p align="center">
   <a href="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml"><img src="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <br>
+  <br><img width="100%" alt="Faixa de aviso" src="assets/fun/caution-tape/caution-tape-larga-v4.svg" />
 </p>
 
 <p align="center">
