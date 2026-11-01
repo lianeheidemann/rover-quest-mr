@@ -1,6 +1,19 @@
 package io.github.lianeheidemann.roverquest.ui
 
 import android.util.Log
+import io.github.lianeheidemann.roverquest.R
+import androidx.compose.ui.res.painterResource
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.platform.LocalContext
@@ -28,8 +41,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Row
@@ -181,6 +192,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     }
 
     fun onTap() {
+        // Nothing is placed until the player accepts the detected floor area.
+        if (setup.phase == SetupPhase.CONFIRM_AREA) return
         val hit = reticleHit ?: return
         if (trackingState != TrackingState.TRACKING) return
         rejection = null
@@ -284,6 +297,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     fun forgetSession() {
         if (recorder.state == ARRecorder.State.RECORDING) recorder.stop()
         restart()
+        // A new session has new floor planes: the player must accept the area again.
+        setup = FloorSetup()
         floorDetected = false
         reticleHit = null
         trackingState = TrackingState.PAUSED
@@ -484,6 +499,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             coloredDepth?.let { DepthOverlay(it) }
         }
 
+        val areaConfirmed = setup.areaConfirmed
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -495,6 +511,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             StatusBar(
                 tracking = trackingState == TrackingState.TRACKING,
                 trackingText = trackingLabel(trackingState, failureReason),
+                // Before the area is accepted only the torch is offered: it helps find the floor.
+                showGameTools = areaConfirmed,
                 diagnosticOn = diagnosticOn,
                 onToggleDiagnostic = { setDiagnostic(!diagnosticOn) },
                 torchOn = torchOn,
@@ -504,8 +522,10 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                     showMap = !showMap
                     overlayVersion++
                 },
+                canChooseNewArea = playbackFile == null,
+                onNewArea = ::chooseNewArea,
             )
-            if (diagnosticOn) {
+            if (diagnosticOn && areaConfirmed) {
                 DiagnosticPanel(
                     report = depthReport,
                     supportText = depthLabel(depthSupport),
@@ -527,6 +547,9 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             rejectionText = rejection?.let(::rejectionLabel),
             noteText = "Sem profundidade: só o obstáculo virtual bloqueia."
                 .takeIf { setup.roverPlaced && depthSupport == DepthSupport.NONE },
+            confirmingArea = hint == SetupHint.CONFIRM_AREA,
+            onConfirmArea = { setup = setup.confirmArea() },
+            onNewArea = ::chooseNewArea,
             tapMode = tapMode.takeIf { setup.roverPlaced },
             onTapModeChange = {
                 tapMode = it
@@ -536,59 +559,99 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             onRemoveObstacle = { setup = setup.withoutObstacle() },
             showRestart = setup.roverPlaced,
             onRestart = ::restart,
-            showNewArea = playbackFile == null,
-            onNewArea = ::chooseNewArea,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
 }
 
-/** One compact line: tracking state on the left, depth diagnostics switch on the right. */
+/** One compact line: tracking state on the left, icon switches on the right. */
 @Composable
 private fun StatusBar(
     tracking: Boolean,
     trackingText: String,
+    showGameTools: Boolean,
     diagnosticOn: Boolean,
     onToggleDiagnostic: () -> Unit,
     torchOn: Boolean,
     onToggleTorch: () -> Unit,
     showMap: Boolean,
     onToggleMap: () -> Unit,
+    canChooseNewArea: Boolean,
+    onNewArea: () -> Unit,
 ) {
     Row(
         modifier = Modifier
             .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
-            .padding(start = 12.dp, end = 4.dp),
+            .padding(start = 14.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
         Box(
             modifier = Modifier
                 .size(8.dp)
                 .background(if (tracking) Color(0xFF66BB6A) else Color(0xFFFFB300), CircleShape),
         )
-        Text(trackingText, color = Color.White, style = MaterialTheme.typography.labelLarge)
-        CompactChip(label = "Profundidade", selected = diagnosticOn, onClick = onToggleDiagnostic)
-        CompactChip(label = "Mapa", selected = showMap, onClick = onToggleMap)
-        CompactChip(label = "\uD83D\uDD26", selected = torchOn, onClick = onToggleTorch) // 🔦 torch
+        Text(
+            trackingText,
+            color = Color.White,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.padding(end = 6.dp),
+        )
+        if (showGameTools) {
+            IconToggle(R.drawable.ic_depth, "Profundidade", diagnosticOn, onToggleDiagnostic)
+            IconToggle(R.drawable.ic_map, "Mapa de obstáculos", showMap, onToggleMap)
+        }
+        IconToggle(R.drawable.ic_torch, "Lanterna", torchOn, onToggleTorch)
+        if (showGameTools && canChooseNewArea) {
+            var menuOpen by remember { mutableStateOf(false) }
+            Box {
+                IconToggle(R.drawable.ic_more, "Mais opções", selected = false) { menuOpen = true }
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text("Escolher outra área") },
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_new_area), contentDescription = null) },
+                        onClick = {
+                            menuOpen = false
+                            onNewArea()
+                        },
+                    )
+                }
+            }
+        }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/** Round icon button that turns purple while its option is on. */
+@Composable
+private fun IconToggle(icon: Int, description: String, selected: Boolean, onClick: () -> Unit) {
+    IconButton(
+        onClick = onClick,
+        modifier = Modifier.size(40.dp),
+        colors = IconButtonDefaults.iconButtonColors(
+            containerColor = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+            contentColor = if (selected) MaterialTheme.colorScheme.onPrimary else Color.White,
+        ),
+    ) {
+        Icon(painterResource(icon), contentDescription = description, modifier = Modifier.size(22.dp))
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SetupPanel(
     hintText: String,
     warning: Boolean,
     rejectionText: String?,
     noteText: String?,
+    confirmingArea: Boolean,
+    onConfirmArea: () -> Unit,
+    onNewArea: () -> Unit,
     tapMode: TapMode?,
     onTapModeChange: (TapMode) -> Unit,
     hasObstacle: Boolean,
     onRemoveObstacle: () -> Unit,
     showRestart: Boolean,
     onRestart: () -> Unit,
-    showNewArea: Boolean,
-    onNewArea: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val background = if (warning) Color(0xFFB71C1C) else Color.Black
@@ -596,59 +659,91 @@ private fun SetupPanel(
         modifier = modifier
             .navigationBarsPadding()
             .padding(horizontal = 12.dp, vertical = 8.dp)
-            .background(background.copy(alpha = 0.6f), RoundedCornerShape(16.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .background(background.copy(alpha = 0.6f), RoundedCornerShape(20.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Text(
             hintText,
             color = Color.White,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodyLarge,
         )
-        if (noteText != null) {
+        listOfNotNull(noteText, rejectionText).forEach { line ->
             Text(
-                noteText,
+                line,
                 color = Color(0xFFFFD54F),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        if (rejectionText != null) {
-            Text(
-                rejectionText,
-                color = Color(0xFFFFD54F),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        ) {
-            if (tapMode != null) {
-                CompactChip("Destino", tapMode == TapMode.DESTINATION) { onTapModeChange(TapMode.DESTINATION) }
-                CompactChip("Obstáculo virtual", tapMode == TapMode.OBSTACLE) { onTapModeChange(TapMode.OBSTACLE) }
+
+        if (confirmingArea) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = onNewArea) {
+                    Icon(painterResource(R.drawable.ic_new_area), contentDescription = null, tint = Color.White)
+                    Text("Outra área", color = Color.White, modifier = Modifier.padding(start = 8.dp))
+                }
+                Button(onClick = onConfirmArea) {
+                    Icon(painterResource(R.drawable.ic_confirm), contentDescription = null)
+                    Text("Confirmar", modifier = Modifier.padding(start = 8.dp))
+                }
             }
-            if (hasObstacle) CompactChip("Tirar obstáculo", selected = false, onClick = onRemoveObstacle)
-            if (showRestart) CompactChip("Recomeçar", selected = false, onClick = onRestart)
-            if (showNewArea) CompactChip("Outra área", selected = false, onClick = onNewArea)
+        }
+
+        if (tapMode != null) {
+            // What a tap places on the floor: exactly one is active.
+            SingleChoiceSegmentedButtonRow {
+                val options = listOf(
+                    Triple(TapMode.DESTINATION, R.drawable.ic_destination, "Destino"),
+                    Triple(TapMode.OBSTACLE, R.drawable.ic_obstacle, "Obstáculo"),
+                )
+                options.forEachIndexed { index, (mode, icon, label) ->
+                    SegmentedButton(
+                        selected = tapMode == mode,
+                        onClick = { onTapModeChange(mode) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size),
+                        icon = { Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(18.dp)) },
+                        colors = SegmentedButtonDefaults.colors(
+                            activeContainerColor = MaterialTheme.colorScheme.primary,
+                            activeContentColor = MaterialTheme.colorScheme.onPrimary,
+                            activeBorderColor = MaterialTheme.colorScheme.primary,
+                            inactiveContainerColor = Color.Black.copy(alpha = 0.35f),
+                            inactiveContentColor = Color.White,
+                            inactiveBorderColor = Color.White.copy(alpha = 0.6f),
+                        ),
+                    ) { Text(label) }
+                }
+            }
+        }
+
+        if (hasObstacle || showRestart) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (hasObstacle) CompactChip("Tirar obstáculo", selected = false, icon = R.drawable.ic_remove, onClick = onRemoveObstacle)
+                if (showRestart) CompactChip("Recomeçar", selected = false, icon = R.drawable.ic_restart, onClick = onRestart)
+            }
         }
     }
 }
 
-/** Small pill button used for every control, so the camera view stays clear. */
+/** Small pill button, optionally with an icon, so the camera view stays clear. */
 @Composable
-fun CompactChip(label: String, selected: Boolean, onClick: () -> Unit) {
+fun CompactChip(label: String, selected: Boolean, icon: Int? = null, onClick: () -> Unit) {
     FilterChip(
         selected = selected,
         onClick = onClick,
-        label = { Text(label, style = MaterialTheme.typography.labelMedium) },
+        label = { Text(label, style = MaterialTheme.typography.labelLarge) },
+        leadingIcon = icon?.let { res ->
+            { Icon(painterResource(res), contentDescription = null, modifier = Modifier.size(18.dp)) }
+        },
         colors = FilterChipDefaults.filterChipColors(
             containerColor = Color.Black.copy(alpha = 0.35f),
             labelColor = Color.White,
+            iconColor = Color.White,
             selectedContainerColor = MaterialTheme.colorScheme.primary,
             selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+            selectedLeadingIconColor = MaterialTheme.colorScheme.onPrimary,
         ),
     )
 }
@@ -657,7 +752,7 @@ private fun trackingLabel(state: TrackingState, reason: TrackingFailureReason?):
     TrackingState.TRACKING -> "Rastreando"
     TrackingState.STOPPED -> "Rastreamento parado"
     TrackingState.PAUSED -> when (reason) {
-        TrackingFailureReason.INSUFFICIENT_LIGHT -> "Pouca luz: toque em \uD83D\uDD26"
+        TrackingFailureReason.INSUFFICIENT_LIGHT -> "Pouca luz: ligue a lanterna"
         TrackingFailureReason.EXCESSIVE_MOTION -> "Mova mais devagar"
         TrackingFailureReason.INSUFFICIENT_FEATURES -> "Aponte para mais detalhes"
         TrackingFailureReason.CAMERA_UNAVAILABLE -> "Câmera indisponível"
@@ -676,6 +771,7 @@ private fun hintLabel(hint: SetupHint, blocked: NoPathReason?): String = when (h
     SetupHint.TRACKING_LOST -> "Rastreamento perdido: aponte para o piso, devagar."
     SetupHint.ANCHOR_LOST -> "O rover se perdeu. Toque em Recomeçar."
     SetupHint.SCAN_FLOOR -> "Mova o celular devagar sobre o piso."
+    SetupHint.CONFIRM_AREA -> "Piso encontrado. Quer jogar nesta área?"
     SetupHint.AIM_AT_FLOOR -> "Mire o círculo nos pontos do piso."
     SetupHint.TAP_TO_PLACE_ROVER -> "Toque para colocar o rover."
     SetupHint.TAP_TO_PLACE_DESTINATION -> "Toque para marcar o destino."
