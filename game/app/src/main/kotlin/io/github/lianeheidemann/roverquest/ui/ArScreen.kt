@@ -503,7 +503,6 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 val routeMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color(0xFF29B6F6))
                 }
-                val roverModel = rememberModelInstance(modelLoader, ROVER_MODEL_ASSET)
                 val reticleMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color.White.copy(alpha = 0.8f))
                 }
@@ -521,6 +520,10 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 }
 
                 floorAnchor?.let { anchor ->
+                    // One model per placed rover: when the anchor goes (Recomeçar), SceneView destroys
+                    // the model's entities along with its node, so a shared instance would come back
+                    // invisible. Keyed on the anchor, the old model is freed and a new one loaded.
+                    val roverModel = key(anchor) { rememberModelInstance(modelLoader, ROVER_MODEL_ASSET) }
                     AnchorNode(
                         anchor = anchor,
                         onTrackingStateChanged = { anchorState = it },
