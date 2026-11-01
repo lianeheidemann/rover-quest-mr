@@ -42,9 +42,6 @@ fun buildGrid(setup: FloorSetup, map: ObstacleMap? = null): OccupancyGrid {
                 if (state == CellState.OCCUPIED) occupied.add(cell) else grid[cell] = state
             }
         }
-        // Placed on the floor, so known free unless depth saw something right there.
-        freeAround(grid, map, FloorPoint.ORIGIN)
-        setup.destination?.let { freeAround(grid, map, it) }
         val reach = ceil(FloorSetup.ROVER_RADIUS / ROUTE_CELL_SIZE).toInt()
         for (cell in occupied) {
             for (dr in -reach..reach) {
@@ -55,6 +52,10 @@ fun buildGrid(setup: FloorSetup, map: ObstacleMap? = null): OccupancyGrid {
                 }
             }
         }
+        // Placed on the floor, so known free unless depth saw something right there. Done after
+        // inflation: an obstacle next to the rover or the destination must not seal them in.
+        freeAround(grid, map, FloorPoint.ORIGIN)
+        setup.destination?.let { freeAround(grid, map, it) }
     }
     setup.obstacle?.let { obstacle ->
         // Inflated by the rover's radius so the rover's center can follow the path safely.

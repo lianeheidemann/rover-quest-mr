@@ -14,9 +14,12 @@ data class CameraIntrinsics(val fx: Float, val fy: Float, val cx: Float, val cy:
  */
 data class FloorSample(val x: Float, val z: Float, val height: Float)
 
-/** Depth is only trusted between these distances, in meters, for mapping. */
+/**
+ * Depth is only trusted between these distances, in meters, for mapping. Far away the floor is
+ * seen at a grazing angle and small depth errors turn into large height errors.
+ */
 const val MIN_MAPPING_DEPTH = 0.3f
-const val MAX_MAPPING_DEPTH = 4f
+const val MAX_MAPPING_DEPTH = 2.5f
 
 /** Pixels below this confidence (`0..1`) are skipped when confidence is available. */
 const val MIN_MAPPING_CONFIDENCE = 0.5f

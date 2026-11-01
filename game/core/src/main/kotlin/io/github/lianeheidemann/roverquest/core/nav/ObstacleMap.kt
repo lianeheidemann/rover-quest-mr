@@ -4,13 +4,13 @@ import io.github.lianeheidemann.roverquest.core.depth.FloorSample
 import io.github.lianeheidemann.roverquest.core.floor.FloorPoint
 
 /** Points this high above the floor (meters) or more block the rover... */
-const val MIN_OBSTACLE_HEIGHT = 0.03f
+const val MIN_OBSTACLE_HEIGHT = 0.05f
 
 /** ...up to this height; anything higher (a table top) leaves room for the rover underneath. */
 const val MAX_OBSTACLE_HEIGHT = 0.40f
 
 /** Points within this distance of the floor height count as free floor. */
-const val FLOOR_TOLERANCE = 0.02f
+const val FLOOR_TOLERANCE = 0.03f
 
 /** A cell needs this many points of one kind in a frame to get a vote. */
 const val MIN_POINTS_PER_VOTE = 2

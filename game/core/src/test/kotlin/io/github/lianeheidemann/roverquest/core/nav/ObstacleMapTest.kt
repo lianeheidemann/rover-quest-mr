@@ -110,6 +110,14 @@ class ObstacleMapTest {
     }
 
     @Test
+    fun `a destination right next to a real obstacle stays reachable`() {
+        // Destination 15 cm from the box edge: inside the inflated area, but placed on the floor.
+        val nearBox = (FloorSetup().withRover().placeDestination(0.8f, 0f, 0f) as PlacementResult.Accepted).setup
+        val map = newObstacleMap().apply { seeFloor(); seeBox() }
+        assertIs<RoutePlan.Route>(planRoute(nearBox, map))
+    }
+
+    @Test
     fun `unseen floor asks for a scan instead of assuming it is free`() {
         assertEquals(RoutePlan.NeedsScan, planRoute(ready, newObstacleMap()))
     }

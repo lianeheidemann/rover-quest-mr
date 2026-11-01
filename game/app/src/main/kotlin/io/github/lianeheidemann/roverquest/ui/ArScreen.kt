@@ -9,6 +9,7 @@ import io.github.lianeheidemann.roverquest.core.depth.CameraIntrinsics
 import io.github.lianeheidemann.roverquest.core.depth.ColoredDepth
 import io.github.lianeheidemann.roverquest.core.depth.DepthFrame
 import io.github.lianeheidemann.roverquest.core.depth.projectToFloor
+import io.github.lianeheidemann.roverquest.core.nav.NoPathReason
 import io.github.lianeheidemann.roverquest.core.nav.ROUTE_CELL_SIZE
 import io.github.lianeheidemann.roverquest.core.nav.buildGrid
 import io.github.lianeheidemann.roverquest.core.nav.gridColors
@@ -491,7 +492,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         }
 
         SetupPanel(
-            hintText = hintLabel(hint),
+            hintText = hintLabel(hint, (route as? RoutePlan.Blocked)?.reason),
             warning = hint == SetupHint.TRACKING_LOST || hint == SetupHint.ANCHOR_LOST,
             rejectionText = rejection?.let(::rejectionLabel),
             noteText = "Sem profundidade: só o obstáculo virtual bloqueia."
@@ -638,7 +639,7 @@ private fun depthLabel(support: DepthSupport): String = when (support) {
     DepthSupport.AUTOMATIC_AND_RAW -> "com Raw Depth"
 }
 
-private fun hintLabel(hint: SetupHint): String = when (hint) {
+private fun hintLabel(hint: SetupHint, blocked: NoPathReason?): String = when (hint) {
     SetupHint.TRACKING_LOST -> "Rastreamento perdido: aponte para o piso, devagar."
     SetupHint.ANCHOR_LOST -> "O rover se perdeu. Toque em Recomeçar."
     SetupHint.SCAN_FLOOR -> "Mova o celular devagar sobre o piso."
@@ -646,7 +647,11 @@ private fun hintLabel(hint: SetupHint): String = when (hint) {
     SetupHint.TAP_TO_PLACE_ROVER -> "Toque para colocar o rover."
     SetupHint.TAP_TO_PLACE_DESTINATION -> "Toque para marcar o destino."
     SetupHint.NEEDS_SCAN -> "Aponte a câmera para o caminho até o destino."
-    SetupHint.NO_ROUTE -> "Sem caminho: mova o obstáculo ou o destino."
+    SetupHint.NO_ROUTE -> when (blocked) {
+        NoPathReason.START_BLOCKED -> "O rover está cercado: tire o obstáculo de perto dele."
+        NoPathReason.GOAL_BLOCKED -> "O destino está num obstáculo: mova o destino."
+        else -> "Sem caminho: mova o obstáculo ou o destino."
+    }
     SetupHint.READY -> "Rota calculada."
 }
 
