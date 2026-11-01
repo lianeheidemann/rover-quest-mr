@@ -1,6 +1,6 @@
 # RoverQuest — Guia de implementação passo a passo
 
-> **Status:** Partes 1 a 4 validadas no S23 Ultra; Partes 5 e 6 implementadas, aguardando validação no aparelho.  
+> **Status:** Partes 1 a 4 validadas no S23 Ultra; Partes 5 e 6 implementadas, com problemas vistos no aparelho (ver pendências nas partes).  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -84,12 +84,12 @@
 
 ### Parte 5 — Mapa de obstáculos
 
-- [x] Converter profundidade em células ocupadas e livres, de forma estável.
+- [ ] Converter profundidade em células ocupadas e livres, de forma estável.
 - [x] Considerar o tamanho do rover ao marcar obstáculos.
 - [x] Célula não observada continua desconhecida, nunca livre.
 - [x] Sobreposição visual da grade para depuração.
 - [x] Obstáculo manual continua disponível.
-  - **Implementado, ainda não testado no S23 Ultra.** A profundidade vira pontos no frame da âncora
+  - **Testado no S23 Ultra: falhou.** A profundidade vira pontos no frame da âncora
     do piso (`core/depth/DepthProjection.kt`). Pontos entre 5 e 40 cm de altura votam "obstáculo";
     pontos no piso (±3 cm) votam "livre", até 2,5 m da câmera; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
     mesa) não votam. Uma célula só muda de estado após 3 votos líquidos, com histerese
@@ -97,15 +97,20 @@
     piso visto como livre e, se faltar ver parte do caminho, pede para apontar a câmera. Chip "Mapa":
     verde = livre, vermelho = obstáculo visto, laranja = folga do rover ou obstáculo virtual. Sem
     suporte a profundidade, só o obstáculo virtual bloqueia, com aviso.
+  - **Pendência:** com o rover longe do celular, ou depois de o celular balançar, o chão perto da
+    câmera é marcado como obstáculo: a altura é medida em relação à âncora, e alguns centímetros de
+    diferença entre a âncora e o chão real bastam. Correção proposta: estimar a altura do chão a
+    partir da própria profundidade.
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
 ### Parte 6 — Navegação do rover
 
-- [x] Rover segue a rota com movimento suave.
-- [x] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
-- [x] Replaneja quando o mapa muda de forma estável.
-  - **Implementado, ainda não testado no S23 Ultra.** Botão "Ir" inicia o trajeto; o rover anda a
+- [ ] Rover segue a rota com movimento suave.
+- [ ] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
+- [ ] Replaneja quando o mapa muda de forma estável.
+  - **Implementado, não validado:** o rover ainda não completou um trajeto contornando uma caixa
+    real no S23 Ultra, porque depende da Parte 5. Botão "Ir" inicia o trajeto; o rover anda a
     15 cm/s, gira no lugar quando precisa virar mais de 20° e passa exatamente pelos cantos da rota
     (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
@@ -158,4 +163,4 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 
 Ver [references.md](references.md).
 
-> **Próxima ação:** validar as Partes 5 e 6 no aparelho. Não implementar todas as partes ao mesmo tempo.
+> **Próxima ação:** corrigir a altura do chão no mapa (Parte 5) e validar as Partes 5 e 6 no aparelho. Não implementar todas as partes ao mesmo tempo.
