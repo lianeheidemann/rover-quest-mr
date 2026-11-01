@@ -124,6 +124,7 @@ enum class SetupHint {
     AIM_AT_FLOOR,
     TAP_TO_PLACE_ROVER,
     TAP_TO_PLACE_DESTINATION,
+    NEEDS_SCAN,
     NO_ROUTE,
     READY,
 }
@@ -136,6 +137,7 @@ enum class SetupHint {
  * @param floorDetected at least one floor surface has been found.
  * @param aimingAtFloor the placement reticle currently hits a floor surface.
  * @param routeBlocked rover and destination are placed but no route connects them.
+ * @param routeNeedsScan a route may exist, but part of the way was never observed.
  */
 fun setupHint(
     setup: FloorSetup,
@@ -144,10 +146,15 @@ fun setupHint(
     floorDetected: Boolean,
     aimingAtFloor: Boolean,
     routeBlocked: Boolean = false,
+    routeNeedsScan: Boolean = false,
 ): SetupHint = when {
     setup.roverPlaced && anchorStopped -> SetupHint.ANCHOR_LOST
     !cameraTracking -> SetupHint.TRACKING_LOST
-    setup.phase == SetupPhase.READY -> if (routeBlocked) SetupHint.NO_ROUTE else SetupHint.READY
+    setup.phase == SetupPhase.READY -> when {
+        routeBlocked -> SetupHint.NO_ROUTE
+        routeNeedsScan -> SetupHint.NEEDS_SCAN
+        else -> SetupHint.READY
+    }
     !floorDetected -> SetupHint.SCAN_FLOOR
     !aimingAtFloor -> SetupHint.AIM_AT_FLOOR
     setup.phase == SetupPhase.PLACE_ROVER -> SetupHint.TAP_TO_PLACE_ROVER
