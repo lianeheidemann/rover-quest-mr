@@ -5,5 +5,5 @@
 <h1 align="center">RoverQuest MR</h1>
 
 <p align="center">
-  Jogo educativo de robótica em realidade aumentada para Android, no qual um rover virtual planeja rotas e desvia de obstáculos físicos detectados a partir de dados de profundidade.
+  Aplicação Android de realidade mista para o ensino de robótica: um rover virtual percebe o ambiente real por meio de sensoriamento de profundidade, constrói um mapa de ocupação e planeja rotas com A* para contornar obstáculos físicos.
 </p>
