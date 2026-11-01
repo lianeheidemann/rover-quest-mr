@@ -42,48 +42,22 @@ Sua casa vira a fase. Caixas, livros e almofadas de verdade se tornam obstáculo
 
 ## Versão beta
 
-Versão **0.1.0**, em testes. Gravação feita no Galaxy S23 Ultra.
-
 <p align="left">
   <img src="assets/interface/interface-v1.webp" alt="Versão beta do RoverQuest MR: piso detectado, rover e destino posicionados e rota desviando de um obstáculo virtual" width="40%">
 </p>
 
-| Recurso | Situação |
+**Já funciona:** detecção do piso, rover e destino por toque, rota com A* e desvio de obstáculo virtual.  
+**Em desenvolvimento:** obstáculos reais pela câmera, movimento do rover e modos de jogo.
+
+## Requisitos
+
+| | |
 | --- | --- |
-| Detecção do piso | ✅ Disponível |
-| Posicionamento do rover e do destino por toque | ✅ Disponível |
-| Cálculo de rota (A*) exibido sobre o piso | ✅ Disponível |
-| Obstáculo virtual, com recálculo da rota | ✅ Disponível |
-| Diagnóstico de profundidade | 🧪 Experimental |
-| Obstáculos reais detectados pela câmera | 🚧 Em desenvolvimento |
-| Movimento do rover e modos de jogo | 🚧 Em desenvolvimento |
+| Android | 7.0 ou superior |
+| ARCore | Obrigatório: o modelo precisa estar na [lista de dispositivos compatíveis](https://developers.google.com/ar/devices) |
+| App | [Google Play Services for AR](https://play.google.com/store/apps/details?id=com.google.ar.core) instalado |
 
-## Requisitos e compatibilidade
-
-O RoverQuest MR é um app Android nativo (Kotlin) que depende do **ARCore**, a plataforma de realidade aumentada do Google. Por isso, o requisito decisivo não é a potência do celular, e sim o modelo estar certificado para ARCore.
-
-| Requisito | Detalhe |
-| --- | --- |
-| Sistema | Android 7.0 (API 24) ou superior |
-| ARCore | **Obrigatório.** O modelo precisa constar na [lista oficial de dispositivos compatíveis](https://developers.google.com/ar/devices) |
-| Google Play Services for AR | Instalado e atualizado pela [Play Store](https://play.google.com/store/apps/details?id=com.google.ar.core) |
-| Câmera | Câmera traseira, com permissão concedida ao app |
-| Gráficos | OpenGL ES 3.0 |
-| Depth API | Opcional por enquanto; usada só no diagnóstico. Será necessária para detectar obstáculos reais. Na lista oficial, aparece como *Supports Depth API* |
-
-**Aparelhos testados**
-
-| Aparelho | Resultado |
-| --- | --- |
-| Samsung Galaxy S23 Ultra | ✅ Funciona (ARCore com Depth API e Raw Depth) |
-
-Outros modelos ainda não foram testados. Se o seu aparelho está na lista do ARCore, o app deve funcionar; se não estiver, ele exibe o aviso *"Este aparelho não é compatível com o ARCore"*.
-
-**Como instalar**
-
-1. Baixe o APK em [Releases](https://github.com/lianeheidemann/rover-quest-mr/releases/latest).
-2. Ao abrir o arquivo, autorize a instalação de apps de fontes desconhecidas, se o Android pedir.
-3. Abra o RoverQuest MR e permita o uso da câmera.
+Testado no Galaxy S23 Ultra. Para instalar, baixe o APK em [Releases](https://github.com/lianeheidemann/rover-quest-mr/releases/latest) e permita a instalação de fontes desconhecidas.
 
 ## Onde jogar
 
