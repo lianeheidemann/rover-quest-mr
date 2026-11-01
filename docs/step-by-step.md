@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Partes 1, 2 e 3 concluídas e validadas no S23 Ultra; Parte 4 implementada, aguardando validação no aparelho.  
+> **Status:** Partes 1 a 4 concluídas e validadas no S23 Ultra; próxima: Parte 5.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -70,7 +70,11 @@
 - [x] Ler e visualizar a profundidade em um modo de diagnóstico.
 - [x] Avisar quando a leitura estiver indisponível ou incerta.
 - [x] Gravar uma sessão do ARCore para repetir testes sem reposicionar o celular.
-  - **Implementado, ainda não testado no S23 Ultra.** Botão "Diagnóstico de profundidade": liga a
+  - **Validado no S23 Ultra:** leituras confiáveis do piso a 0,68 m, 0,92 m e 1,26 m (confiança
+    82–94%, cobertura 100%), cores na orientação certa e leitura incerta sinalizada (2,09 m com
+    confiança 0%). Limitação vista: o reflexo de luz no piso brilhante é lido como "longe". A gravação
+    e a repetição de sessão **ainda não foram testadas no aparelho**.
+    Botão "Profundidade": liga a
     Depth API (automática), sobrepõe a profundidade em cores (vermelho = perto, azul = longe) e mostra a
     distância no centro da tela com a confiança do Raw Depth. A leitura é marcada como incerta com pouca
     cobertura, sem dado no centro, confiança baixa ou fora de 0,3–5 m (`core/depth/`). "Gravar sessão"
@@ -135,11 +139,6 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 
 ## 6. Referências
 
-- [Google — ARCore Android SDK](https://developers.google.com/ar/develop/java/quickstart)
-- [Google — Depth API para Android](https://developers.google.com/ar/develop/java/depth/overview)
-- [Google — Dispositivos compatíveis](https://developers.google.com/ar/devices)
-- [Google — ARCore Recording & Playback (Android)](https://developers.google.com/ar/develop/java/recording-and-playback/introduction)
-- [SceneView — Android AR, exemplos e `llms.txt`](https://github.com/sceneview/sceneview)
-- [Jetpack Compose](https://developer.android.com/compose)
+Ver [references.md](references.md).
 
-> **Próxima ação:** executar **apenas a Parte 4**. Não implementar todas as partes ao mesmo tempo.
+> **Próxima ação:** executar **apenas a Parte 5**. Não implementar todas as partes ao mesmo tempo.
