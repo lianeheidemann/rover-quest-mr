@@ -83,6 +83,8 @@ Testado no Galaxy S23 Ultra. Para instalar, baixe o APK em [Releases](https://gi
 
 Distribuído sob a [licença MIT](LICENSE). Os ícones da interface vêm do Material Design (Apache 2.0).
 
+--- 
+
 <p align="center">
-  <img src="assets/readme/roverquest-rover-and-flag.png" alt="Rover do RoverQuest ao lado da bandeira de destino" width="420">
+  <img src="assets/readme/roverquest-rover-and-flag.png" alt="Rover do RoverQuest ao lado da bandeira de destino" width="30%">
 </p>
