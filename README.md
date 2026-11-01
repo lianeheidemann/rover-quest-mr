@@ -6,8 +6,8 @@
 
 <p align="center">
   <img src="assets/badge/badge_em-construcao-azul-v1.svg">
-  <br>
-  <a href="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml"><img src="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://github.com/lianeheidemann/rover-quest-mr/releases/latest"><img src="assets/badge/badge_download-apk-demo-v1.svg" alt="Download APK da versão demo"></a>
+  <a href="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/lianeheidemann/rover-quest-mr/ci.yml?branch=main&style=for-the-badge&logo=github&label=CI" alt="CI"></a>
   <br>
   <br><img width="100%" alt="Faixa de aviso" src="assets/fun/caution-tape/caution-tape-larga-v4.svg" />
 </p>
