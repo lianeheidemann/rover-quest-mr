@@ -94,7 +94,7 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 | `MainActivity.kt` | Ponto de entrada; só abre a interface |
 | `ui/RoverQuestApp.kt` | Pede a permissão da câmera, verifica o ARCore e escolhe a tela via `resolveStartupState` (`:core`) |
 | `ui/ArScreen.kt` | Sessão AR (SceneView): converte o toque no piso para coordenadas da âncora, chama o `FloorSetup` e desenha rover, destino, obstáculo e rota como filhos da âncora; painéis de status e instruções |
-| `assets/models/` | Modelos 3D do rover (`rover.glb`, `rover-mini.glb`), ainda não usados no código |
+| `assets/models/` | Modelos 3D do rover. O jogo usa `rover-mini-lite.glb` (58 mil vértices, texturas de 1024 px), gerado a partir de `rover-mini.glb`; `rover.glb` e `rover-mini.glb` são os originais, guardados para a futura troca de rover |
 | `res/` | Ícone e textos |
 
 ### Fluxo de um toque
@@ -143,6 +143,18 @@ flowchart TD
 - Posições do jogo são relativas à **âncora do piso**, criada onde o rover é colocado; por isso tudo fica preso ao chão quando o celular se move.
 - A interface só exibe estado e envia ações; regras ficam no `:core`.
 - Profundidade: a leitura entra no `:app` (Parte 4) e a conversão em células da grade no `:core` (Parte 5), conforme o [plano](../docs/step-by-step.md).
+
+### Modelo 3D otimizado
+
+Modelos gerados por IA costumam ser pesados demais para rodar junto com a câmera e a profundidade.
+O `rover-mini-lite.glb` foi gerado assim (fora do projeto, sem dependência no build):
+
+```bash
+npx gltfpack@1.3.0 -i rover-mini.glb -o rover-mini-lite.glb -si 0.05 -cc -noq
+```
+
+Depois, as texturas foram reduzidas de 4096 para 1024 px. `-noq` mantém as posições em float: com
+posições quantizadas, o SceneView calcula a escala do modelo de forma errada.
 
 ## Comandos
 

@@ -74,7 +74,9 @@ import io.github.lianeheidemann.roverquest.core.startup.DepthSupport
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
 import io.github.sceneview.math.Position
+import io.github.sceneview.math.Rotation
 import io.github.sceneview.math.Size
+import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.rememberOnGestureListener
 
 private const val TAG = "RoverQuest"
@@ -83,6 +85,15 @@ private val FLOOR = setOf(Plane.Type.HORIZONTAL_UPWARD_FACING)
 
 /** Distance between the dots that draw the route on the floor. */
 private const val ROUTE_DOT_SPACING = 0.08f
+
+/** Lightweight rover model; generated from `rover-mini.glb` (see game/README.md). */
+private const val ROVER_MODEL_ASSET = "models/rover-mini-lite.glb"
+
+/** The model's largest side, in meters; its footprint then fits the rover's 10 cm radius. */
+private const val ROVER_MODEL_SIZE = 0.2f
+
+/** Turn around the vertical axis so the model faces -Z, the rover's front (glTF faces +Z). */
+private const val ROVER_MODEL_YAW = 180f
 
 /** What a tap does once the rover is on the floor. */
 private enum class TapMode { DESTINATION, OBSTACLE }
@@ -373,6 +384,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 val routeMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color(0xFF29B6F6))
                 }
+                val roverModel = rememberModelInstance(modelLoader, ROVER_MODEL_ASSET)
                 val reticleMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color.White.copy(alpha = 0.8f))
                 }
@@ -394,17 +406,29 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                         anchor = anchor,
                         onTrackingStateChanged = { anchorState = it },
                     ) {
-                        // Simple rover at the anchor origin; the sphere marks its front (-Z).
-                        CubeNode(
-                            size = Size(0.12f, 0.06f, 0.16f),
-                            center = Position(y = 0.03f),
-                            materialInstance = roverBody,
-                        )
-                        SphereNode(
-                            radius = 0.02f,
-                            position = Position(y = 0.05f, z = -0.07f),
-                            materialInstance = roverEye,
-                        )
+                        val model = roverModel
+                        if (model != null) {
+                            // Standing on the floor at the anchor origin, facing -Z.
+                            ModelNode(
+                                modelInstance = model,
+                                scaleToUnits = ROVER_MODEL_SIZE,
+                                centerOrigin = Position(0f, -1f, 0f),
+                                rotation = Rotation(y = ROVER_MODEL_YAW),
+                            )
+                        } else {
+                            // Simple rover while the model loads (or if it fails); the sphere
+                            // marks its front (-Z).
+                            CubeNode(
+                                size = Size(0.12f, 0.06f, 0.16f),
+                                center = Position(y = 0.03f),
+                                materialInstance = roverBody,
+                            )
+                            SphereNode(
+                                radius = 0.02f,
+                                position = Position(y = 0.05f, z = -0.07f),
+                                materialInstance = roverEye,
+                            )
+                        }
                         setup.obstacle?.let { obstacle ->
                             // Virtual stand-in for a real box until depth detection (Parts 4 and 5).
                             CubeNode(
