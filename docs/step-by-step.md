@@ -37,19 +37,24 @@
 - [ ] Preparar JDK e Android SDK; verificar `adb` e `./gradlew`.
 - [ ] Criar projeto Kotlin/Gradle com Jetpack Compose e configuração Android.
 - [ ] Adicionar SceneView/ARSceneView e dependências compatíveis de ARCore.
-- [ ] Configurar manifest, câmera, ARCore, verificações de compatibilidade e permissões.
+- [ ] Configurar manifest como **AR Required**, câmera, ARCore, verificações de compatibilidade e permissões.
+- [ ] Definir `minSdk` compatível com a versão fixada do SceneView (ARCore exige no mínimo API 24).
 - [ ] Exibir a câmera e uma sessão AR de teste no Galaxy S23 Ultra.
+- [ ] **Diagnóstico antecipado de profundidade:** verificar `session.isDepthModeSupported(...)` para `AUTOMATIC` e `RAW_DEPTH_ONLY` no aparelho e registrar o resultado. O S23 Ultra não tem sensor ToF; a profundidade é estimada por movimento — confirmar antes de investir nas Partes 4–5.
 - [ ] Criar estados claros para recurso indisponível, permissão negada e sessão interrompida.
 - [ ] Validar compilação e instalação via Gradle/adb, sem depender do editor gráfico.
+- [ ] Criar o módulo Gradle **JVM puro `:core`** (sem plugin Android) para mapeamento, navegação e matemática de projeção.
+- [ ] Criar `AGENTS.md` com convenções, comandos de build/teste e critérios de aceite por parte.
+- [ ] Adicionar CI que compila o projeto e executa os testes unitários de `:core`.
 
-**Concluído quando:** o APK abre, solicita permissões corretamente e mostra a sessão AR com rastreamento no aparelho.
+**Concluído quando:** o APK abre, solicita permissões corretamente, mostra a sessão AR com rastreamento no aparelho e o suporte a profundidade do S23 Ultra está documentado.
 
 ### Parte 2 — Detectar piso, posicionar rover e destino
 
 - [ ] Consultar planos horizontais rastreados pelo ARCore (`Plane`).
 - [ ] Aplicar hit test com `Frame.hitTest(...)` para selecionar pontos de posicionamento.
 - [ ] Exibir reticle enquanto o plano é encontrado.
-- [ ] Adicionar modelo 3D do rover leve, em escala adequada (GLB/glTF).
+- [ ] Começar com um rover primitivo (caixa/cilindro); depois trocar por um modelo 3D leve, em escala adequada (GLB/glTF), registrando fonte e licença.
 - [ ] Fixar rover e destino a referências espaciais usando `Anchor`, gerenciando seu ciclo de vida.
 - [ ] Exibir estados: procurando piso, posicionando, pronto e rastreamento perdido.
 
@@ -60,10 +65,11 @@
 - [ ] Criar grade local 2D (exemplo: 2 × 2 m, células de 10–20 cm).
 - [ ] Distinguir células **livres**, **ocupadas** e **desconhecidas**.
 - [ ] Permitir um obstáculo retangular **manual** para testes.
-- [ ] Implementar A* em Kotlin puro, com heurística consistente e regras de vizinhança definidas.
+- [ ] Implementar A* em Kotlin puro, no módulo `:core`, com heurística consistente e regras de vizinhança definidas.
+- [ ] Definir a política para células **desconhecidas**: bloqueadas no modo Missão; custo alto (mas transitáveis) no modo Laboratório.
 - [ ] Converter o caminho em pontos 3D visíveis sobre o piso.
 - [ ] Tratar ausência de rota, início/destino bloqueado e coordenadas fora da grade.
-- [ ] Escrever testes JUnit para caminho livre, desvio, bloqueio e menor caminho em cenários simples.
+- [ ] Escrever testes JUnit para caminho livre, desvio, bloqueio, menor caminho e tratamento de células desconhecidas em cenários simples.
 
 **Concluído quando:** o caminho contorna o obstáculo manual e os testes da lógica executam sem câmera/ARCore.
 
@@ -76,18 +82,29 @@
 - [ ] Tratar ausência de atualização, medidas inválidas e, quando disponíveis, imagens de confiança Raw Depth.
 - [ ] Encerrar corretamente cada `Image` adquirida e evitar processamento pesado na thread da interface.
 - [ ] Testar piso, caixa e parede em iluminação/diferentes distâncias.
+- [ ] Usar **ARCore Recording & Playback** (`Session.startRecording`, `Session.setPlaybackDatasetUri`) para gravar o cenário da caixa e reprocessá-lo de forma reprodutível, sem reposicionar o celular a cada teste.
+- [ ] Opcional: exportar amostras (profundidade + intrínsecos + pose) como fixtures para testes JVM do módulo `:core`.
 
 **Concluído quando:** o celular mostra profundidade estimada e o aplicativo informa quando essa leitura é indisponível ou incerta.
 
 ### Parte 5 — Converter profundidade em mapa de obstáculos
 
 - [ ] Definir referencial de mapa **ancorado ao piso** e coerente com rover e destino.
-- [ ] Projetar amostras de profundidade em pontos 3D usando intrínsecos de câmera, resolução da imagem, orientação e pose correspondentes.
-- [ ] Filtrar medidas inválidas/ruidosas e pontos próximos ao piso.
-- [ ] Projetar pontos acima do plano do piso nas células da grade.
+- [ ] Projetar amostras de profundidade em pontos 3D usando intrínsecos de câmera, resolução da imagem, orientação e pose correspondentes:
+  - escalar `camera.imageIntrinsics` para a resolução da imagem de profundidade;
+  - usar a pose da câmera do **mesmo instante** da imagem de profundidade (comparar `Image.timestamp` com o do frame);
+  - Depth16 está em milímetros; valor `0` significa medida inválida.
+- [ ] Copiar o buffer e fechar a `Image` imediatamente; processar em corrotina de fundo a ~5–10 Hz.
+- [ ] Manter a função de projeção pura (arrays + intrínsecos + matrizes) no módulo `:core`, com testes JVM.
+- [ ] Filtrar medidas inválidas/ruidosas.
+- [ ] Classificar pontos pela altura em relação ao plano do piso (limiares iniciais, ajustáveis):
+  - |h| < ~3 cm → evidência de célula **livre**;
+  - ~5 cm < h < ~1,5 m → evidência de célula **ocupada**;
+  - demais alturas → ignorar.
+- [ ] Acumular evidências por célula com contadores hit/miss (ou log-odds) e limiares para trocar de estado.
 - [ ] Inflar células ocupadas de acordo com raio/largura do rover e margem de segurança.
-- [ ] Combinar observações sucessivas com filtros conservadores, evitando oscilações.
-- [ ] Conservar células não observadas como **desconhecidas**, não automaticamente livres.
+- [ ] Combinar observações sucessivas com histerese conservadora, evitando oscilações.
+- [ ] Conservar células sem evidência como **desconhecidas**, não automaticamente livres.
 - [ ] Disponibilizar sobreposição visual de grade, pontos/obstáculos e rota para depuração.
 - [ ] Preservar a opção de inserir obstáculo manual.
 
@@ -98,6 +115,7 @@
 ### Parte 6 — Fazer o rover navegar
 
 - [ ] Implementar deslocamento do rover ao longo da rota com velocidade limitada e orientação suave.
+- [ ] Expressar rota e posição do rover no referencial da âncora do piso, recalculando a pose de mundo a cada frame (a âncora pode ser ajustada pelo ARCore).
 - [ ] Animar as rodas e atualizar estados da missão.
 - [ ] Parar ao perder rastreamento ou quando o mapa ficar pouco confiável.
 - [ ] Replanejar somente após mudanças relevantes e estáveis, com limite de frequência.
@@ -125,7 +143,7 @@
 - [ ] Tratar pausa, retomada, permissões negadas e recursos indisponíveis.
 - [ ] Documentar versões exatas das dependências e comandos para build/instalação.
 - [ ] Criar README com requisitos, arquitetura, imagens, demonstração e limitações verificadas.
-- [ ] Adicionar CI para compilar e executar testes unitários em mudanças de código.
+- [ ] Revisar a CI (criada na Parte 1) e o `AGENTS.md` para refletir o estado final.
 
 **Concluído quando:** o APK pode ser instalado e demonstrado de modo reproduzível, com limitações conhecidas documentadas.
 
@@ -142,26 +160,29 @@
 ## 4. Estrutura futura sugerida
 
 ```text
-rover-quest-mr-/
+rover-quest-mr/
 ├── docs/
 │   └── step-by-step.md
+├── core/                         # Módulo JVM puro, sem Android
+│   └── src/
+│       ├── main/kotlin/.../roverquest/
+│       │   ├── mapping/          # Grade de ocupação e projeção de profundidade
+│       │   └── navigation/       # A*, rotas
+│       └── test/kotlin/          # Testes JUnit (A*, mapeamento, projeção)
 ├── app/
 │   └── src/
 │       ├── main/
 │       │   ├── java/.../roverquest/
 │       │   │   ├── ar/           # Sessão, planos, poses, anchors
-│       │   │   ├── depth/        # Captura e filtragem
-│       │   │   ├── mapping/      # Grade de ocupação
-│       │   │   ├── navigation/   # A*, rotas
+│       │   │   ├── depth/        # Captura, cópia de buffers, gravação/playback
 │       │   │   ├── rover/        # Movimento e renderização
 │       │   │   └── ui/           # Jetpack Compose
 │       │   ├── assets/models/   # Modelos GLB
 │       │   └── AndroidManifest.xml
-│       └── test/                 # Testes JVM (A* e mapeamento)
 ├── gradle/
 ├── build.gradle.kts
-├── settings.gradle.kts
-├── AGENTS.md                     # Contratos para agentes; criar futuramente
+├── settings.gradle.kts           # include(":app", ":core")
+├── AGENTS.md                     # Contratos para agentes; criar na Parte 1
 └── README.md
 ```
 
@@ -170,9 +191,10 @@ rover-quest-mr-/
 ## 5. Desenvolvimento assistido por LLM
 
 - Dividir solicitações ao agente **por etapa**, sem pedir toda a aplicação de uma vez.
-- Manter a lógica A*/mapeamento independente de API Android para permitir testes rápidos.
+- Manter a lógica A*/mapeamento/projeção no módulo `:core`, sem API Android, para permitir testes rápidos (`./gradlew :core:test`).
 - Exigir que cada mudança compile e execute testes relevantes antes de seguir.
-- Criar futuramente `AGENTS.md` com responsabilidades, convenções e critérios de aceite.
+- Criar `AGENTS.md` já na Parte 1, com responsabilidades, convenções e critérios de aceite.
+- Usar gravações ARCore (Parte 4) para reproduzir cenários sem depender de testes manuais repetidos.
 - Consultar a documentação **da versão instalada** de SceneView; ele oferece `llms.txt` e integração MCP, mas exemplos da internet podem não corresponder à versão fixada.
 - Preferir Gradle CLI, VS Code/Cursor e `adb` para iteração; abrir o Android Studio apenas se necessário para configurar SDK, depurar ou inspecionar o aplicativo.
 
@@ -192,6 +214,7 @@ rover-quest-mr-/
 - [Google — Depth API para Android](https://developers.google.com/ar/develop/java/depth/overview)
 - [Google — Raw Depth no Android](https://developers.google.com/ar/develop/java/depth/raw-depth)
 - [Google — Dispositivos compatíveis](https://developers.google.com/ar/devices)
+- [Google — ARCore Recording & Playback (Android)](https://developers.google.com/ar/develop/java/recording-and-playback/introduction)
 - [SceneView — Android AR, exemplos e `llms.txt`](https://github.com/sceneview/sceneview)
 - [Jetpack Compose](https://developer.android.com/compose)
 - [Android — Testes locais](https://developer.android.com/training/testing/local-tests)
