@@ -5,7 +5,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.ui.platform.LocalContext
 import com.google.ar.core.Frame
+import io.github.lianeheidemann.roverquest.core.depth.CameraIntrinsics
 import io.github.lianeheidemann.roverquest.core.depth.ColoredDepth
+import io.github.lianeheidemann.roverquest.core.depth.DepthFrame
+import io.github.lianeheidemann.roverquest.core.depth.projectToFloor
+import io.github.lianeheidemann.roverquest.core.nav.ROUTE_CELL_SIZE
+import io.github.lianeheidemann.roverquest.core.nav.buildGrid
+import io.github.lianeheidemann.roverquest.core.nav.gridColors
+import io.github.lianeheidemann.roverquest.core.nav.newObstacleMap
 import io.github.lianeheidemann.roverquest.core.depth.DepthQuality
 import io.github.lianeheidemann.roverquest.core.depth.DepthReport
 import io.github.lianeheidemann.roverquest.core.depth.analyzeDepth
@@ -87,6 +94,26 @@ private const val DEPTH_STALE_AFTER_NS = 1_500_000_000L
 
 private fun depthAvailable(support: DepthSupport): Boolean = support != DepthSupport.NONE
 
+/** The debug map overlay is rebuilt at most once per second. */
+private const val OVERLAY_UPDATE_INTERVAL_NS = 1_000_000_000L
+
+/** ARCore gives intrinsics for the full CPU image; scale them to the depth image. */
+private fun depthIntrinsics(frame: Frame, depth: DepthFrame): CameraIntrinsics? {
+    val intrinsics = frame.camera.imageIntrinsics
+    val (width, height) = intrinsics.imageDimensions.let { it[0] to it[1] }
+    val fx = intrinsics.focalLength[0]
+    val fy = intrinsics.focalLength[1]
+    if (width <= 0 || height <= 0 || fx <= 0f || fy <= 0f) return null
+    val sx = depth.width / width.toFloat()
+    val sy = depth.height / height.toFloat()
+    return CameraIntrinsics(
+        fx = fx * sx,
+        fy = fy * sy,
+        cx = intrinsics.principalPoint[0] * sx,
+        cy = intrinsics.principalPoint[1] * sy,
+    )
+}
+
 /** The most recent session recording, or `null` when none was made yet. */
 private fun newestRecording(dir: File): File? =
     dir.listFiles { file -> file.extension == "mp4" && file.length() > 0 }?.maxByOrNull { it.lastModified() }
@@ -121,7 +148,20 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     var coloredDepth by remember { mutableStateOf<ColoredDepth?>(null) }
     var lastDepthAtNs by remember { mutableLongStateOf(0L) }
 
-    val route = remember(setup) { planRoute(setup) }
+    // Obstacle map from depth (Part 5), in the floor anchor's frame. Without depth support the
+    // route falls back to the manual obstacle only.
+    val obstacleMap = remember { newObstacleMap() }
+    var mapVersion by remember { mutableIntStateOf(0) }
+    var showMap by remember { mutableStateOf(false) }
+    val mapping = depthSupport == DepthSupport.AUTOMATIC_ONLY || depthSupport == DepthSupport.AUTOMATIC_AND_RAW
+
+    val route = remember(setup, mapVersion, mapping) { planRoute(setup, obstacleMap.takeIf { mapping }) }
+    // The debug overlay is rebuilt at most once per second: it is many small quads.
+    var overlayVersion by remember { mutableIntStateOf(0) }
+    var lastOverlayAtNs by remember { mutableLongStateOf(0L) }
+    val overlayColors = remember(setup, overlayVersion, mapping, showMap) {
+        if (showMap) gridColors(buildGrid(setup, obstacleMap.takeIf { mapping }), obstacleMap.takeIf { mapping }) else null
+    }
     val routeDots = remember(route) {
         (route as? RoutePlan.Route)?.let { samplePoints(it.points, ROUTE_DOT_SPACING) }.orEmpty()
     }
@@ -159,6 +199,27 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         setup = setup.reset()
         rejection = null
         tapMode = TapMode.DESTINATION
+        // The map lives in the old anchor's frame.
+        obstacleMap.clear()
+        mapVersion++
+        overlayVersion++
+    }
+
+    /** Adds what depth sees to the obstacle map, while the floor anchor is reliable. */
+    fun updateMap(frame: Frame, depthFrame: DepthFrame) {
+        val anchor = floorAnchor ?: return
+        if (frame.camera.trackingState != TrackingState.TRACKING) return
+        if (anchor.trackingState != TrackingState.TRACKING) return
+        val intrinsics = depthIntrinsics(frame, depthFrame) ?: return
+        val floorFromCamera = FloatArray(16)
+        anchor.pose.inverse().compose(frame.camera.pose).toMatrix(floorFromCamera, 0)
+        if (obstacleMap.integrate(projectToFloor(depthFrame, intrinsics, floorFromCamera))) {
+            mapVersion = obstacleMap.version
+        }
+        if (frame.timestamp - lastOverlayAtNs >= OVERLAY_UPDATE_INTERVAL_NS) {
+            lastOverlayAtNs = frame.timestamp
+            if (showMap) overlayVersion = obstacleMap.version
+        }
     }
 
     fun clearDepth() {
@@ -180,6 +241,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             return
         }
         lastDepthAtNs = frame.timestamp
+        updateMap(frame, depthFrame)
+        if (!diagnosticOn) return
         depthReport = analyzeDepth(depthAvailable(depthSupport), depthFrame)
         // The app is portrait-only: the sensor image is a quarter turn clockwise from the display.
         coloredDepth = colorize(depthFrame, quarterTurns = 1)
@@ -243,6 +306,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         floorDetected = floorDetected,
         aimingAtFloor = reticleHit != null,
         routeBlocked = route is RoutePlan.Blocked,
+        routeNeedsScan = route is RoutePlan.NeedsScan,
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -269,12 +333,12 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                     Log.e(TAG, "Playback failed", exception)
                     leavePlayback()
                 },
-                // Depth costs CPU, so it is only turned on for diagnostics (Part 4).
+                // Depth feeds the obstacle map (Part 5) and the diagnostics (Part 4).
                 // ARSceneView downgrades it to DISABLED where it is not supported.
-                depthMode = if (diagnosticOn) Config.DepthMode.AUTOMATIC else Config.DepthMode.DISABLED,
+                depthMode = Config.DepthMode.AUTOMATIC,
                 onSessionUpdated = { session, frame ->
                     recorder.recordFrame(session)
-                    if (diagnosticOn) updateDepth(frame)
+                    if (diagnosticOn || floorAnchor != null) updateDepth(frame)
                     val state = frame.camera.trackingState
                     if (state != trackingState) trackingState = state
                     if (!floorDetected) {
@@ -349,6 +413,15 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                                 materialInstance = obstacleMark,
                             )
                         }
+                        overlayColors?.let { colors ->
+                            MapOverlay(
+                                colors = colors,
+                                gridSize = obstacleMap.size,
+                                cellSize = ROUTE_CELL_SIZE,
+                                halfSize = FloorSetup.PLAY_AREA_HALF_SIZE,
+                                version = overlayVersion,
+                            )
+                        }
                         for (dot in routeDots) {
                             key(dot) {
                                 CylinderNode(
@@ -395,6 +468,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 trackingText = trackingLabel(trackingState, failureReason),
                 diagnosticOn = diagnosticOn,
                 onToggleDiagnostic = { setDiagnostic(!diagnosticOn) },
+                showMap = showMap,
+                onToggleMap = {
+                    showMap = !showMap
+                    overlayVersion++
+                },
             )
             if (diagnosticOn) {
                 DiagnosticPanel(
@@ -416,6 +494,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             hintText = hintLabel(hint),
             warning = hint == SetupHint.TRACKING_LOST || hint == SetupHint.ANCHOR_LOST,
             rejectionText = rejection?.let(::rejectionLabel),
+            noteText = "Sem profundidade: só o obstáculo virtual bloqueia."
+                .takeIf { setup.roverPlaced && depthSupport == DepthSupport.NONE },
             tapMode = tapMode.takeIf { setup.roverPlaced },
             onTapModeChange = {
                 tapMode = it
@@ -439,6 +519,8 @@ private fun StatusBar(
     trackingText: String,
     diagnosticOn: Boolean,
     onToggleDiagnostic: () -> Unit,
+    showMap: Boolean,
+    onToggleMap: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -453,11 +535,8 @@ private fun StatusBar(
                 .background(if (tracking) Color(0xFF66BB6A) else Color(0xFFFFB300), CircleShape),
         )
         Text(trackingText, color = Color.White, style = MaterialTheme.typography.labelLarge)
-        CompactChip(
-            label = "Profundidade",
-            selected = diagnosticOn,
-            onClick = onToggleDiagnostic,
-        )
+        CompactChip(label = "Profundidade", selected = diagnosticOn, onClick = onToggleDiagnostic)
+        CompactChip(label = "Mapa", selected = showMap, onClick = onToggleMap)
     }
 }
 
@@ -467,6 +546,7 @@ private fun SetupPanel(
     hintText: String,
     warning: Boolean,
     rejectionText: String?,
+    noteText: String?,
     tapMode: TapMode?,
     onTapModeChange: (TapMode) -> Unit,
     hasObstacle: Boolean,
@@ -493,6 +573,14 @@ private fun SetupPanel(
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodyMedium,
         )
+        if (noteText != null) {
+            Text(
+                noteText,
+                color = Color(0xFFFFD54F),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         if (rejectionText != null) {
             Text(
                 rejectionText,
@@ -557,6 +645,7 @@ private fun hintLabel(hint: SetupHint): String = when (hint) {
     SetupHint.AIM_AT_FLOOR -> "Mire o círculo nos pontos do piso."
     SetupHint.TAP_TO_PLACE_ROVER -> "Toque para colocar o rover."
     SetupHint.TAP_TO_PLACE_DESTINATION -> "Toque para marcar o destino."
+    SetupHint.NEEDS_SCAN -> "Aponte a câmera para o caminho até o destino."
     SetupHint.NO_ROUTE -> "Sem caminho: mova o obstáculo ou o destino."
     SetupHint.READY -> "Rota calculada."
 }
