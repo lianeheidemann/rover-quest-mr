@@ -55,6 +55,16 @@ class RoutePlannerTest {
     }
 
     @Test
+    fun `an obstacle accepted right next to the rover does not seal it in`() {
+        // 26 cm from the rover: accepted (limit 25 cm), but its inflated area reaches the
+        // rover's 5 cm cell.
+        val setup = rover.destination(-1f, 0f).obstacle(0.26f, 0f)
+        assertIs<RoutePlan.Route>(planRoute(setup))
+        val withMap = planRoute(setup, newObstacleMap())
+        assertTrue(withMap !is RoutePlan.Blocked || withMap.reason != NoPathReason.START_BLOCKED)
+    }
+
+    @Test
     fun `grid marks the inflated obstacle as occupied`() {
         val grid = buildGrid(rover.obstacle(1f, 1f))
         assertEquals(CellState.OCCUPIED, grid[grid.cellAt(FloorPoint(1f, 1f))!!])

@@ -61,6 +61,12 @@ fun buildGrid(setup: FloorSetup, map: ObstacleMap? = null, rover: FloorPoint = F
         // Inflated by the rover's radius so the rover's center can follow the path safely.
         val half = FloorSetup.OBSTACLE_BLOCKED_HALF_SIZE
         grid.markRect(obstacle, half, half, CellState.OCCUPIED)
+        // The rover and the destination really are on these cells: the obstacle, accepted
+        // next to them, must not seal them in because of the 5 cm grid rounding.
+        for (spot in listOfNotNull(rover, setup.destination)) {
+            val cell = grid.cellAt(spot) ?: continue
+            if (map?.stateOf(cell) != CellState.OCCUPIED) grid[cell] = if (map == null) CellState.UNKNOWN else CellState.FREE
+        }
     }
     return grid
 }
