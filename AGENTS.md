@@ -17,10 +17,14 @@ O plano oficial é `docs/step-by-step.md`. Leia antes de implementar e siga a or
 - Uma mudança só está pronta quando compila e os testes relevantes passam.
 - O que depende de câmera/ARCore só pode ser validado no aparelho: diga que não foi testado
   em vez de afirmar que funciona.
+- Detalhes não especificados no plano ficam a critério do código existente; adapte-se a ele.
 
 ## Regras técnicas
 - Sem Unity, C#, AR Foundation ou motores de jogos.
 - Grade, A* e projeção de profundidade ficam no módulo `:core`, Kotlin puro, sem imports Android.
+- `:core` recebe dados prontos (profundidade, toques, tempo); nunca acessa ARCore ou Android.
+- Posições do jogo (rover, destino, rota, obstáculos) são relativas à âncora do piso, não ao mundo.
+- A interface só exibe estado e envia ações; regras de jogo não ficam na UI.
 - Fixe versões de dependências; o SceneView muda rápido: consulte a documentação/`llms.txt`
   da versão instalada, não exemplos genéricos da internet.
 - Código e identificadores em inglês; documentação em português.
