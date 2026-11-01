@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Parte 1 concluída e validada no S23 Ultra; Parte 2 implementada, aguardando validação no aparelho.  
+> **Status:** Parte 1 concluída e validada no S23 Ultra; Partes 2 e 3 implementadas, aguardando validação no aparelho.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -51,11 +51,15 @@
 
 ### Parte 3 — Rota com A*
 
-- [ ] Grade local com células livres, ocupadas e desconhecidas.
-- [ ] Obstáculo manual para testes.
-- [ ] A* no módulo `:core`, tratando ausência de rota.
-- [ ] Exibir a rota sobre o piso.
-- [ ] Testes JUnit da lógica.
+- [x] Grade local com células livres, ocupadas e desconhecidas.
+- [x] Obstáculo manual para testes.
+- [x] A* no módulo `:core`, tratando ausência de rota.
+- [x] Exibir a rota sobre o piso.
+- [x] Testes JUnit da lógica.
+  - **Implementado, ainda não testado no S23 Ultra.** Grade de 5 cm em 5 × 5 m centrada no rover
+    (`core/nav/`); A* com 8 vizinhos, sem cortar quinas. O obstáculo manual é uma caixa virtual de
+    30 cm, ampliada pelo raio do rover na grade. Sem profundidade ainda, as células desconhecidas são
+    atravessadas como livres; só o obstáculo manual bloqueia.
 
 **Concluído quando:** a rota contorna o obstáculo manual e os testes rodam sem câmera/ARCore.
 
