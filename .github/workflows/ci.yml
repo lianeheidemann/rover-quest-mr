@@ -44,4 +44,4 @@ jobs:
           APK="RoverQuestMR-${TAG}.apk"
           cp app/build/outputs/apk/debug/app-debug.apk "$APK"
           gh release create "$TAG" "$APK" --target "$GITHUB_SHA" \
-            --title "RoverQuest MR $TAG" --generate-notes --prerelease
+            --title "RoverQuest MR $TAG" --generate-notes --latest
