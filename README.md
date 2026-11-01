@@ -7,7 +7,7 @@
 <p align="center">
   <img src="assets/badge/badge_em-construcao-azul-v1.svg">
   <br>
-  <br><img width="50%" alt="Faixa de aviso" src="assets/fun/caution-tape/caution-tape-larga-v4.svg" />
+  <br><img width="100%" alt="Faixa de aviso" src="assets/fun/caution-tape/caution-tape-larga-v4.svg" />
 </p>
 
 <p align="center">
