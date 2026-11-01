@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Parte 1 implementada; falta validar no aparelho (sessão AR e suporte a profundidade).  
+> **Status:** Parte 1 concluída e validada no S23 Ultra; próxima: Parte 2.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -30,9 +30,10 @@
 ### Parte 1 — Aplicativo mínimo
 
 - [x] Projeto Kotlin/Compose com dois módulos: `:app` (Android) e `:core` (Kotlin puro).
-- [ ] Sessão AR com câmera funcionando no S23 Ultra.
-- [ ] Verificar no aparelho se a profundidade do ARCore é suportada e registrar o resultado.
-- [ ] Mensagens claras para permissão negada e AR indisponível.
+- [x] Sessão AR com câmera funcionando no S23 Ultra.
+- [x] Verificar no aparelho se a profundidade do ARCore é suportada e registrar o resultado.
+  - **Resultado (S23 Ultra):** profundidade suportada, **com Raw Depth**; rastreamento ativo e piso detectado.
+- [x] Mensagens claras para permissão negada e AR indisponível (implementadas; AR indisponível não é testável no S23 Ultra).
 - [x] Comandos de build/teste no `AGENTS.md` e CI que compila e roda os testes: em todo PR para a `main` e após cada merge nela, com cache do Gradle.
 
 **Concluído quando:** o APK instala via `adb`, abre a sessão AR no aparelho e o suporte a profundidade está documentado.
