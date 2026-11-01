@@ -105,7 +105,7 @@
 - [x] Rover segue a rota com movimento suave.
 - [x] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
 - [x] Replaneja quando o mapa muda de forma estável.
-  - **Implementado, ainda não testado no S23 Ultra.** Botão ▶ inicia o trajeto; o rover anda a
+  - **Implementado, ainda não testado no S23 Ultra.** Botão "Ir" inicia o trajeto; o rover anda a
     15 cm/s, gira no lugar quando precisa virar mais de 20° e passa exatamente pelos cantos da rota
     (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo

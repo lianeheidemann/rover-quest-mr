@@ -752,12 +752,28 @@ private fun SetupPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Text(
-            hintText,
-            color = Color.White,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodyMedium,
-        )
+        // The hint, with the main action (start or stop the rover) right beside it.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                hintText,
+                color = Color.White,
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f, fill = false),
+            )
+            if (driving || canGo) {
+                val compact = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+                val (icon, label, action) =
+                    if (driving) Triple(R.drawable.ic_stop, "Parar", onStop) else Triple(R.drawable.ic_play, "Ir", onGo)
+                Button(onClick = action, contentPadding = compact, modifier = Modifier.height(36.dp)) {
+                    Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+                }
+            }
+        }
         listOfNotNull(noteText, rejectionText).forEach { line ->
             Text(
                 line,
@@ -781,7 +797,7 @@ private fun SetupPanel(
             }
         }
 
-        if (tapMode != null || hasObstacle || showRestart || canGo || driving) {
+        if (tapMode != null || hasObstacle || showRestart) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -814,9 +830,6 @@ private fun SetupPanel(
                 }
                 if (hasObstacle) IconToggle(R.drawable.ic_remove, "Tirar obstáculo", selected = false, onClick = onRemoveObstacle)
                 if (showRestart) IconToggle(R.drawable.ic_restart, "Recomeçar", selected = false, onClick = onRestart)
-                // Start (purple, the main action) or stop the rover.
-                if (driving) IconToggle(R.drawable.ic_stop, "Parar o rover", selected = true, onClick = onStop)
-                else if (canGo) IconToggle(R.drawable.ic_play, "Ir até o destino", selected = true, onClick = onGo)
             }
         }
     }
@@ -876,7 +889,7 @@ private fun hintLabel(hint: SetupHint, blocked: NoPathReason?): String = when (h
         NoPathReason.GOAL_BLOCKED -> "Destino num obstáculo: mova o destino."
         else -> "Sem caminho: mova obstáculo ou destino."
     }
-    SetupHint.READY -> "Rota pronta: toque em ▶."
+    SetupHint.READY -> "Rota pronta: toque em Ir."
     SetupHint.DRIVING -> "Rover a caminho…"
     SetupHint.ARRIVED -> "Chegou! Marque outro destino."
 }
