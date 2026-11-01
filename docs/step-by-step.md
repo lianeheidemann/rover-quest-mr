@@ -135,11 +135,6 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 
 ## 6. Referências
 
-- [Google — ARCore Android SDK](https://developers.google.com/ar/develop/java/quickstart)
-- [Google — Depth API para Android](https://developers.google.com/ar/develop/java/depth/overview)
-- [Google — Dispositivos compatíveis](https://developers.google.com/ar/devices)
-- [Google — ARCore Recording & Playback (Android)](https://developers.google.com/ar/develop/java/recording-and-playback/introduction)
-- [SceneView — Android AR, exemplos e `llms.txt`](https://github.com/sceneview/sceneview)
-- [Jetpack Compose](https://developer.android.com/compose)
+Ver [references.md](references.md).
 
 > **Próxima ação:** executar **apenas a Parte 4**. Não implementar todas as partes ao mesmo tempo.
