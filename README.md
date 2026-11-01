@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/robot/robot-02.png" alt="Robô do RoverQuest MR" width="35%">
+  <img src="assets/robot/robot-02.png" alt="Robô do RoverQuest MR" width="25%">
 </p>
 
 <h1 align="center">RoverQuest MR</h1>
