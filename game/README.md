@@ -27,6 +27,23 @@ As versões das dependências ficam em [`gradle/libs.versions.toml`](gradle/libs
 
 A dependência é em um sentido só: `:app` usa `:core`; `:core` nunca conhece Android nem ARCore.
 
+```mermaid
+flowchart LR
+    subgraph app [":app — Android"]
+        Main[MainActivity] --> App[RoverQuestApp] --> Ar[ArScreen]
+    end
+    subgraph core [":core — Kotlin puro"]
+        startup
+        floor
+        nav
+    end
+    App --> startup
+    Ar --> floor
+    Ar --> nav
+    nav --> floor
+    Ar -.-> ARCore[(ARCore + SceneView)]
+```
+
 ## Arquitetura
 
 ### `:core` — regras do jogo
@@ -57,12 +74,27 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 
 ### Fluxo de um toque
 
-```
-Toque → ReticleNode (acerto no piso, ARCore)
-      → ArScreen converte para coordenadas da âncora do piso
-      → FloorSetup.placeDestination / placeObstacle   (:core)
-      → planRoute → OccupancyGrid + findPath (A*)      (:core)
-      → ArScreen desenha a rota e mostra o aviso
+```mermaid
+flowchart TD
+    T([Toque na tela]) --> R["ReticleNode<br/>acerto no piso (ARCore)"]
+    R --> C["ArScreen<br/>converte para coordenadas da âncora do piso"]
+    C --> F["FloorSetup<br/>placeDestination / placeObstacle"]
+    F --> P["planRoute"]
+    P --> G["OccupancyGrid"]
+    G --> A["findPath (A*)"]
+    A --> D["ArScreen<br/>desenha a rota e mostra o aviso"]
+
+    subgraph core [":core — Kotlin puro"]
+        F
+        P
+        G
+        A
+    end
+    subgraph app [":app — Android"]
+        R
+        C
+        D
+    end
 ```
 
 ### Princípios
