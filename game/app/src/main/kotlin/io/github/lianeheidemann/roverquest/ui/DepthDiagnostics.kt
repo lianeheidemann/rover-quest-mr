@@ -135,10 +135,10 @@ fun DiagnosticPanel(
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally)) {
             if (!playingBack) {
-                CompactChip(if (recording) "● Parar gravação" else "Gravar sessão", recording, onToggleRecording)
+                CompactChip(if (recording) "● Parar gravação" else "Gravar sessão", recording, onClick = onToggleRecording)
             }
             if (playingBack || (canReplay && !recording)) {
-                CompactChip(if (playingBack) "Voltar ao vivo" else "Repetir gravação", playingBack, onToggleReplay)
+                CompactChip(if (playingBack) "Voltar ao vivo" else "Repetir gravação", playingBack, onClick = onToggleReplay)
             }
         }
     }
