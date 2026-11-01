@@ -29,11 +29,11 @@
 
 ### Parte 1 — Aplicativo mínimo
 
-- [ ] Projeto Kotlin/Compose com dois módulos: `:app` (Android) e `:core` (Kotlin puro).
+- [x] Projeto Kotlin/Compose com dois módulos: `:app` (Android) e `:core` (Kotlin puro).
 - [ ] Sessão AR com câmera funcionando no S23 Ultra.
 - [ ] Verificar no aparelho se a profundidade do ARCore é suportada e registrar o resultado.
 - [ ] Mensagens claras para permissão negada e AR indisponível.
-- [ ] Comandos de build/teste no `AGENTS.md` e CI que compila e roda os testes: só em PR para a `main`, ignorando mudanças em `docs/`, `assets/` e `*.md`, com cache do Gradle.
+- [x] Comandos de build/teste no `AGENTS.md` e CI que compila e roda os testes: só em PR para a `main` e após o merge nela (para a badge), ignorando mudanças em `docs/`, `assets/` e `*.md`, com cache do Gradle.
 
 **Concluído quando:** o APK instala via `adb`, abre a sessão AR no aparelho e o suporte a profundidade está documentado.
 
@@ -109,7 +109,7 @@
 
 ## 4. Estrutura
 
-Dois módulos: `:app` (Android, AR e interface) e `:core` (Kotlin puro). As pastas internas surgem conforme a implementação.
+Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interface) e `:core` (Kotlin puro). As pastas internas surgem conforme a implementação.
 
 ## 5. Limitações
 

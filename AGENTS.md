@@ -6,6 +6,8 @@ de obstáculos reais detectados pela ARCore Depth API. Aparelho de teste: Galaxy
 
 O plano oficial é `docs/step-by-step.md`. Leia antes de implementar e siga a ordem das partes.
 
+Todo o código do jogo fica em `game/` (projeto Gradle com os módulos `:app` e `:core`).
+
 ## Git
 - Trabalhe na branch `develop`. Não crie outras branches sem pedido explícito.
 - `main` recebe apenas merge da `develop`, via pull request.
@@ -30,4 +32,14 @@ O plano oficial é `docs/step-by-step.md`. Leia antes de implementar e siga a or
 - Código e identificadores em inglês; documentação em português.
 
 ## Comandos
-A definir na Parte 1 (build, testes de `:core`, instalação via `adb`).
+Executar dentro de `game/`:
+- Testes da lógica: `./gradlew :core:test`
+- Build do APK: `./gradlew :app:assembleDebug`
+- Instalar no celular: `./gradlew :app:installDebug` (ou `adb install -r app/build/outputs/apk/debug/app-debug.apk`)
+- Logs do app: `adb logcat -s RoverQuest`
+
+Versões ficam em `game/gradle/libs.versions.toml`; `compileSdk`/`minSdk` em `game/app/build.gradle.kts`.
+
+## Badges do README
+Ao mudar, adicionar, remover ou substituir uma tecnologia ou sua versão, atualize as badges do
+`README.md` no mesmo commit, para que sempre reflitam as versões reais do código.
