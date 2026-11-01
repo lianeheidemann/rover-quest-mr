@@ -35,3 +35,18 @@ Sua casa vira a fase. Caixas, livros e almofadas de verdade se tornam obstáculo
 **O rover tem personalidade:** fica curioso ao explorar, se assusta com obstáculos e comemora quando chega.
 
 > 🚧 Em desenvolvimento: os modos acima são a proposta do jogo e ainda não estão implementados.
+
+## Onde jogar
+
+> [!IMPORTANT]
+> O rover enxerga o ambiente pela câmera do celular. Escolha bem o lugar para ele não se confundir.
+
+| ✅ Prefira | ❌ Evite |
+| --- | --- |
+| Ambiente bem iluminado, de dia ou com luz acesa | Penumbra, contraluz ou sol forte direto na câmera |
+| Piso com alguma textura (madeira, tapete, piso estampado) | Piso liso de cor única, brilhante ou espelhado |
+| Área livre de uns 2 × 2 m, com espaço para você andar ao redor | Corredores apertados ou cantos onde não dá para circular |
+| Obstáculos grandes e opacos: caixas, livros empilhados, almofadas | Vidro, espelhos, objetos finos (pés de cadeira, cabos) ou muito pequenos |
+| Cena parada enquanto joga | Pessoas e animais passando na frente da câmera |
+
+**Dicas:** antes de posicionar o rover, mova o celular devagar apontando para o piso até aparecerem os pontos brancos; mantenha o celular a cerca de 0,5–3 m dos obstáculos; se aparecer o aviso de rastreamento perdido, volte a apontar para o piso, devagar.
