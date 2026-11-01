@@ -77,3 +77,7 @@ Testado no Galaxy S23 Ultra. Para instalar, baixe o APK em [Releases](https://gi
 | Cena parada enquanto joga | Pessoas e animais passando na frente da câmera |
 
 **Dicas:** antes de posicionar o rover, mova o celular devagar apontando para o piso até aparecerem os pontos brancos; mantenha o celular a cerca de 0,5–3 m dos obstáculos; se aparecer o aviso de rastreamento perdido, volte a apontar para o piso, devagar.
+
+<p align="center">
+  <img src="assets/readme/roverquest-rover-and-flag.png" alt="Rover do RoverQuest ao lado da bandeira de destino" width="420">
+</p>
