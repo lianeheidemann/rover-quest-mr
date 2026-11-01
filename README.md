@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roverquest-app-icon-dark.png">
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roverquest-rover-and-flag.png">
     <source media="(prefers-color-scheme: light)" srcset="assets/readme/roverquest-app-icon-ligth.png">
-    <img src="assets/readme/roverquest-app-icon-ligth.png" alt="Ícone do app RoverQuest" width="15%">
+    <img src="assets/readme/roverquest-app-icon-ligth.png" alt="Ícone do app RoverQuest" width="30%">
   </picture>
 </p>
 
@@ -82,9 +82,3 @@ Testado no Galaxy S23 Ultra. Para instalar, baixe o APK em [Releases](https://gi
 ## Licença
 
 Distribuído sob a [licença MIT](LICENSE). Os ícones da interface vêm do Material Design (Apache 2.0).
-
---- 
-
-<p align="center">
-  <img src="assets/readme/roverquest-rover-and-flag.png" alt="Rover do RoverQuest ao lado da bandeira de destino" width="30%">
-</p>
