@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Parte 1 concluída e validada no S23 Ultra; próxima: Parte 2.  
+> **Status:** Parte 1 concluída e validada no S23 Ultra; Parte 2 implementada, aguardando validação no aparelho.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -40,10 +40,12 @@
 
 ### Parte 2 — Piso, rover e destino
 
-- [ ] Detectar o piso e indicar onde é possível posicionar.
-- [ ] Tocar para posicionar o rover (forma simples) e o destino.
-- [ ] Manter ambos fixos ao piso enquanto o celular se move.
-- [ ] Indicar quando o rastreamento é perdido.
+- [x] Detectar o piso e indicar onde é possível posicionar.
+- [x] Tocar para posicionar o rover (forma simples) e o destino.
+- [x] Manter ambos fixos ao piso enquanto o celular se move.
+- [x] Indicar quando o rastreamento é perdido.
+  - **Implementado, ainda não testado no S23 Ultra.** O rover cria a âncora do piso e o destino fica
+    relativo a ela; regras de posicionamento e avisos em `:core` (`core/floor/FloorSetup.kt`).
 
 **Concluído quando:** rover e destino permanecem alinhados ao piso ao movimentar o celular.
 
