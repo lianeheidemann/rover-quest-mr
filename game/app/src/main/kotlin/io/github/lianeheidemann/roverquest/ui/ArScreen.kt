@@ -673,7 +673,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             driving = motion.isRunning,
             onGo = ::go,
             onStop = ::stopRover,
-            modifier = Modifier.align(Alignment.BottomCenter),
+            // The area question is the one decision on screen: centered, so it is not missed.
+            modifier = Modifier.align(if (hint == SetupHint.CONFIRM_AREA) Alignment.Center else Alignment.BottomCenter),
         )
     }
 }
