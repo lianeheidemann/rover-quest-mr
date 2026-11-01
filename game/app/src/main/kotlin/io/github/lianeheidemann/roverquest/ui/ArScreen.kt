@@ -78,6 +78,7 @@ import io.github.lianeheidemann.roverquest.core.floor.PlacementRejection
 import io.github.lianeheidemann.roverquest.core.floor.PlacementResult
 import io.github.lianeheidemann.roverquest.core.floor.SetupHint
 import io.github.lianeheidemann.roverquest.core.floor.SetupPhase
+import io.github.lianeheidemann.roverquest.core.floor.roverHeading
 import io.github.lianeheidemann.roverquest.core.floor.setupHint
 import io.github.lianeheidemann.roverquest.core.nav.RoutePlan
 import io.github.lianeheidemann.roverquest.core.nav.planRoute
@@ -104,8 +105,8 @@ private const val ROVER_MODEL_ASSET = "models/rover-mini-lite.glb"
 /** The model's largest side, in meters; its footprint then fits the rover's 10 cm radius. */
 private const val ROVER_MODEL_SIZE = 0.2f
 
-/** Turn around the vertical axis so the model faces -Z, the rover's front (glTF faces +Z). */
-private const val ROVER_MODEL_YAW = 180f
+/** Turn around the vertical axis so the model's front (its +X side, seen on the phone) faces -Z. */
+private const val ROVER_MODEL_YAW = 90f
 
 /** What a tap does once the rover is on the floor. */
 private enum class TapMode { DESTINATION, OBSTACLE }
@@ -188,6 +189,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     val overlayColors = remember(setup, overlayVersion, mapping, showMap) {
         if (showMap) gridColors(buildGrid(setup, obstacleMap.takeIf { mapping }), obstacleMap.takeIf { mapping }) else null
     }
+    val heading = remember(setup, route) { roverHeading(setup, (route as? RoutePlan.Route)?.points) }
     val routeDots = remember(route) {
         (route as? RoutePlan.Route)?.let { samplePoints(it.points, ROUTE_DOT_SPACING) }.orEmpty()
     }
@@ -427,27 +429,30 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                         onTrackingStateChanged = { anchorState = it },
                     ) {
                         val model = roverModel
-                        if (model != null) {
-                            // Standing on the floor at the anchor origin, facing -Z.
-                            ModelNode(
-                                modelInstance = model,
-                                scaleToUnits = ROVER_MODEL_SIZE,
-                                centerOrigin = Position(0f, -1f, 0f),
-                                rotation = Rotation(y = ROVER_MODEL_YAW),
-                            )
-                        } else {
-                            // Simple rover while the model loads (or if it fails); the sphere
-                            // marks its front (-Z).
-                            CubeNode(
-                                size = Size(0.12f, 0.06f, 0.16f),
-                                center = Position(y = 0.03f),
-                                materialInstance = roverBody,
-                            )
-                            SphereNode(
-                                radius = 0.02f,
-                                position = Position(y = 0.05f, z = -0.07f),
-                                materialInstance = roverEye,
-                            )
+                        // The rover turns to face where it will go: the route, or the destination.
+                        Node(rotation = Rotation(y = heading)) {
+                            if (model != null) {
+                                // Standing on the floor at the anchor origin, facing -Z.
+                                ModelNode(
+                                    modelInstance = model,
+                                    scaleToUnits = ROVER_MODEL_SIZE,
+                                    centerOrigin = Position(0f, -1f, 0f),
+                                    rotation = Rotation(y = ROVER_MODEL_YAW),
+                                )
+                            } else {
+                                // Simple rover while the model loads (or if it fails); the sphere
+                                // marks its front (-Z).
+                                CubeNode(
+                                    size = Size(0.12f, 0.06f, 0.16f),
+                                    center = Position(y = 0.03f),
+                                    materialInstance = roverBody,
+                                )
+                                SphereNode(
+                                    radius = 0.02f,
+                                    position = Position(y = 0.05f, z = -0.07f),
+                                    materialInstance = roverEye,
+                                )
+                            }
                         }
                         setup.obstacle?.let { obstacle ->
                             // Virtual stand-in for a real box until depth detection (Parts 4 and 5).

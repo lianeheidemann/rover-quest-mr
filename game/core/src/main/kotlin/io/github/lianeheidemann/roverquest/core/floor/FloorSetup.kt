@@ -171,3 +171,20 @@ fun setupHint(
     setup.phase == SetupPhase.PLACE_ROVER -> SetupHint.TAP_TO_PLACE_ROVER
     else -> SetupHint.TAP_TO_PLACE_DESTINATION
 }
+
+/**
+ * Turn around the vertical axis, in degrees, that points the rover's front (-Z) from [from]
+ * towards [to]. `0` keeps the front at -Z; positive values turn counter-clockwise seen from above.
+ */
+fun headingDegrees(from: FloorPoint, to: FloorPoint): Float {
+    val dx = to.x - from.x
+    val dz = to.z - from.z
+    if (dx == 0f && dz == 0f) return 0f
+    return Math.toDegrees(kotlin.math.atan2(-dx, -dz).toDouble()).toFloat()
+}
+
+/** Where the rover should face: the first turn of the route, else the destination, else ahead. */
+fun roverHeading(setup: FloorSetup, routePoints: List<FloorPoint>?): Float {
+    val target = routePoints?.getOrNull(1) ?: setup.destination ?: return 0f
+    return headingDegrees(FloorPoint.ORIGIN, target)
+}
