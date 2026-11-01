@@ -18,7 +18,7 @@ class RoutePlannerTest {
     private fun FloorSetup.obstacle(x: Float, z: Float) =
         (placeObstacle(x, 0f, z) as PlacementResult.Accepted).setup
 
-    private val rover = FloorSetup().withRover()
+    private val rover = FloorSetup().confirmArea().withRover()
 
     @Test
     fun `no route before the destination is placed`() {

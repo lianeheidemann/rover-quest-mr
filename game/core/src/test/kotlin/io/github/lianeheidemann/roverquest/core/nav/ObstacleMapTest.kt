@@ -70,7 +70,7 @@ class ObstacleMapTest {
 
     // --- Planning with the map ---
 
-    private val ready = ((FloorSetup().withRover().placeDestination(1.2f, 0f, 0f)) as PlacementResult.Accepted).setup
+    private val ready = ((FloorSetup().confirmArea().withRover().placeDestination(1.2f, 0f, 0f)) as PlacementResult.Accepted).setup
 
     /** Samples at the center of every cell in [xFrom, xTo] × [zFrom, zTo], two points each. */
     private fun cellCenters(xFrom: Float, xTo: Float, zFrom: Float, zTo: Float, height: Float): List<FloorSample> {
@@ -112,7 +112,7 @@ class ObstacleMapTest {
     @Test
     fun `a destination right next to a real obstacle stays reachable`() {
         // Destination 15 cm from the box edge: inside the inflated area, but placed on the floor.
-        val nearBox = (FloorSetup().withRover().placeDestination(0.8f, 0f, 0f) as PlacementResult.Accepted).setup
+        val nearBox = (FloorSetup().confirmArea().withRover().placeDestination(0.8f, 0f, 0f) as PlacementResult.Accepted).setup
         val map = newObstacleMap().apply { seeFloor(); seeBox() }
         assertIs<RoutePlan.Route>(planRoute(nearBox, map))
     }

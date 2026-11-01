@@ -12,7 +12,8 @@ data class FloorPoint(val x: Float, val z: Float) {
     }
 }
 
-enum class SetupPhase { PLACE_ROVER, PLACE_DESTINATION, READY }
+/** Game setup steps, in order. The player first accepts the detected floor area. */
+enum class SetupPhase { CONFIRM_AREA, PLACE_ROVER, PLACE_DESTINATION, READY }
 
 enum class PlacementRejection {
     NO_ROVER,
@@ -32,22 +33,30 @@ sealed interface PlacementResult {
 /**
  * Rover, destination and manual obstacle placed on the floor. The rover defines the floor anchor,
  * so it is always at [FloorPoint.ORIGIN]; everything else is stored relative to it.
+ *
+ * @param areaConfirmed the player accepted the detected floor area; nothing can be placed before.
  */
 data class FloorSetup(
+    val areaConfirmed: Boolean = false,
     val roverPlaced: Boolean = false,
     val destination: FloorPoint? = null,
     val obstacle: FloorPoint? = null,
 ) {
     val phase: SetupPhase
         get() = when {
+            !areaConfirmed -> SetupPhase.CONFIRM_AREA
             !roverPlaced -> SetupPhase.PLACE_ROVER
             destination == null -> SetupPhase.PLACE_DESTINATION
             else -> SetupPhase.READY
         }
 
-    fun withRover(): FloorSetup = FloorSetup(roverPlaced = true)
+    fun confirmArea(): FloorSetup = copy(areaConfirmed = true)
 
-    fun reset(): FloorSetup = FloorSetup()
+    /** Places the rover; ignored until the area is confirmed. */
+    fun withRover(): FloorSetup = if (areaConfirmed) FloorSetup(areaConfirmed = true, roverPlaced = true) else this
+
+    /** Clears rover, destination and obstacle, keeping the confirmed area ("Recomeçar"). */
+    fun reset(): FloorSetup = FloorSetup(areaConfirmed = areaConfirmed)
 
     /**
      * Places (or moves) the destination at the given offset from the floor anchor, in meters,
@@ -121,6 +130,7 @@ enum class SetupHint {
     TRACKING_LOST,
     ANCHOR_LOST,
     SCAN_FLOOR,
+    CONFIRM_AREA,
     AIM_AT_FLOOR,
     TAP_TO_PLACE_ROVER,
     TAP_TO_PLACE_DESTINATION,
@@ -156,6 +166,7 @@ fun setupHint(
         else -> SetupHint.READY
     }
     !floorDetected -> SetupHint.SCAN_FLOOR
+    setup.phase == SetupPhase.CONFIRM_AREA -> SetupHint.CONFIRM_AREA
     !aimingAtFloor -> SetupHint.AIM_AT_FLOOR
     setup.phase == SetupPhase.PLACE_ROVER -> SetupHint.TAP_TO_PLACE_ROVER
     else -> SetupHint.TAP_TO_PLACE_DESTINATION
