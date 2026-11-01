@@ -14,7 +14,7 @@ class FloorSetupTest {
         assertEquals(SetupPhase.PLACE_DESTINATION, withRover.phase)
 
         val result = withRover.placeDestination(1f, 0f, -0.5f)
-        assertIs<DestinationResult.Accepted>(result)
+        assertIs<PlacementResult.Accepted>(result)
         assertEquals(SetupPhase.READY, result.setup.phase)
         assertEquals(FloorPoint(1f, -0.5f), result.setup.destination)
     }
@@ -22,7 +22,7 @@ class FloorSetupTest {
     @Test
     fun `destination needs a rover first`() {
         assertEquals(
-            DestinationResult.Rejected(DestinationRejection.NO_ROVER),
+            PlacementResult.Rejected(PlacementRejection.NO_ROVER),
             FloorSetup().placeDestination(1f, 0f, 1f),
         )
     }
@@ -30,41 +30,105 @@ class FloorSetupTest {
     @Test
     fun `destination on another surface is rejected`() {
         assertEquals(
-            DestinationResult.Rejected(DestinationRejection.NOT_SAME_FLOOR),
+            PlacementResult.Rejected(PlacementRejection.NOT_SAME_FLOOR),
             withRover.placeDestination(1f, 0.45f, 1f),
         )
         assertEquals(
-            DestinationResult.Rejected(DestinationRejection.NOT_SAME_FLOOR),
+            PlacementResult.Rejected(PlacementRejection.NOT_SAME_FLOOR),
             withRover.placeDestination(1f, -0.2f, 1f),
         )
     }
 
     @Test
     fun `small floor height noise is accepted`() {
-        assertIs<DestinationResult.Accepted>(withRover.placeDestination(1f, 0.03f, 1f))
+        assertIs<PlacementResult.Accepted>(withRover.placeDestination(1f, 0.03f, 1f))
     }
 
     @Test
     fun `destination too close to the rover is rejected`() {
         assertEquals(
-            DestinationResult.Rejected(DestinationRejection.TOO_CLOSE),
+            PlacementResult.Rejected(PlacementRejection.TOO_CLOSE),
             withRover.placeDestination(0.1f, 0f, 0.1f),
         )
     }
 
     @Test
     fun `placing again moves the destination`() {
-        val first = withRover.placeDestination(1f, 0f, 0f) as DestinationResult.Accepted
-        val second = first.setup.placeDestination(0f, 0f, 2f) as DestinationResult.Accepted
+        val first = withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted
+        val second = first.setup.placeDestination(0f, 0f, 2f) as PlacementResult.Accepted
         assertEquals(FloorPoint(0f, 2f), second.setup.destination)
         assertEquals(SetupPhase.READY, second.setup.phase)
     }
 
     @Test
     fun `reset clears rover and destination`() {
-        val ready = (withRover.placeDestination(1f, 0f, 0f) as DestinationResult.Accepted).setup
+        val ready = (withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted).setup
         assertEquals(FloorSetup(), ready.reset())
         assertEquals(SetupPhase.PLACE_ROVER, ready.reset().phase)
+    }
+
+    @Test
+    fun `destination outside the play area is rejected`() {
+        assertEquals(
+            PlacementResult.Rejected(PlacementRejection.OUT_OF_AREA),
+            withRover.placeDestination(3f, 0f, 0f),
+        )
+    }
+
+    @Test
+    fun `obstacle is placed and moved on the floor`() {
+        val first = withRover.placeObstacle(0.6f, 0f, 0f) as PlacementResult.Accepted
+        assertEquals(FloorPoint(0.6f, 0f), first.setup.obstacle)
+        val second = first.setup.placeObstacle(0f, 0.02f, 0.8f) as PlacementResult.Accepted
+        assertEquals(FloorPoint(0f, 0.8f), second.setup.obstacle)
+        assertEquals(null, second.setup.withoutObstacle().obstacle)
+    }
+
+    @Test
+    fun `obstacle cannot cover the rover or the destination`() {
+        assertEquals(
+            PlacementResult.Rejected(PlacementRejection.COVERS_ROVER),
+            withRover.placeObstacle(0.2f, 0f, 0f),
+        )
+        val ready = (withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted).setup
+        assertEquals(
+            PlacementResult.Rejected(PlacementRejection.COVERS_DESTINATION),
+            ready.placeObstacle(1.1f, 0f, 0.1f),
+        )
+    }
+
+    @Test
+    fun `obstacle needs a rover and the same floor`() {
+        assertEquals(
+            PlacementResult.Rejected(PlacementRejection.NO_ROVER),
+            FloorSetup().placeObstacle(1f, 0f, 0f),
+        )
+        assertEquals(
+            PlacementResult.Rejected(PlacementRejection.NOT_SAME_FLOOR),
+            withRover.placeObstacle(1f, 0.5f, 0f),
+        )
+    }
+
+    @Test
+    fun `destination cannot be placed on the obstacle`() {
+        val withObstacle = (withRover.placeObstacle(1f, 0f, 0f) as PlacementResult.Accepted).setup
+        assertEquals(
+            PlacementResult.Rejected(PlacementRejection.BLOCKED_BY_OBSTACLE),
+            withObstacle.placeDestination(1.1f, 0f, 0f),
+        )
+    }
+
+    @Test
+    fun `blocked route is reported only when ready`() {
+        val ready = (withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted).setup
+        assertEquals(
+            SetupHint.NO_ROUTE,
+            setupHint(ready, cameraTracking = true, anchorStopped = false, floorDetected = true, aimingAtFloor = true, routeBlocked = true),
+        )
+        assertEquals(
+            SetupHint.TRACKING_LOST,
+            setupHint(ready, cameraTracking = false, anchorStopped = false, floorDetected = true, aimingAtFloor = true, routeBlocked = true),
+        )
     }
 
     private fun hint(
@@ -79,7 +143,7 @@ class FloorSetupTest {
     fun `placement hints follow the phase`() {
         assertEquals(SetupHint.TAP_TO_PLACE_ROVER, hint())
         assertEquals(SetupHint.TAP_TO_PLACE_DESTINATION, hint(setup = withRover))
-        val ready = (withRover.placeDestination(1f, 0f, 0f) as DestinationResult.Accepted).setup
+        val ready = (withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted).setup
         assertEquals(SetupHint.READY, hint(setup = ready, aimingAtFloor = false))
     }
 

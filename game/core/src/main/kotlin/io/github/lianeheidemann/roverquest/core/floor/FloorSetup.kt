@@ -14,20 +14,29 @@ data class FloorPoint(val x: Float, val z: Float) {
 
 enum class SetupPhase { PLACE_ROVER, PLACE_DESTINATION, READY }
 
-enum class DestinationRejection { NO_ROVER, NOT_SAME_FLOOR, TOO_CLOSE }
+enum class PlacementRejection {
+    NO_ROVER,
+    NOT_SAME_FLOOR,
+    OUT_OF_AREA,
+    TOO_CLOSE,
+    BLOCKED_BY_OBSTACLE,
+    COVERS_ROVER,
+    COVERS_DESTINATION,
+}
 
-sealed interface DestinationResult {
-    data class Accepted(val setup: FloorSetup) : DestinationResult
-    data class Rejected(val reason: DestinationRejection) : DestinationResult
+sealed interface PlacementResult {
+    data class Accepted(val setup: FloorSetup) : PlacementResult
+    data class Rejected(val reason: PlacementRejection) : PlacementResult
 }
 
 /**
- * Rover and destination placed on the floor. The rover defines the floor anchor, so it is
- * always at [FloorPoint.ORIGIN]; the destination is stored relative to it.
+ * Rover, destination and manual obstacle placed on the floor. The rover defines the floor anchor,
+ * so it is always at [FloorPoint.ORIGIN]; everything else is stored relative to it.
  */
 data class FloorSetup(
     val roverPlaced: Boolean = false,
     val destination: FloorPoint? = null,
+    val obstacle: FloorPoint? = null,
 ) {
     val phase: SetupPhase
         get() = when {
@@ -44,16 +53,38 @@ data class FloorSetup(
      * Places (or moves) the destination at the given offset from the floor anchor, in meters,
      * with `dy` pointing up from the floor.
      */
-    fun placeDestination(dx: Float, dy: Float, dz: Float): DestinationResult {
-        if (!roverPlaced) return DestinationResult.Rejected(DestinationRejection.NO_ROVER)
-        if (abs(dy) > MAX_FLOOR_HEIGHT_DIFFERENCE) {
-            return DestinationResult.Rejected(DestinationRejection.NOT_SAME_FLOOR)
-        }
+    fun placeDestination(dx: Float, dy: Float, dz: Float): PlacementResult {
+        floorPointOrRejection(dx, dy, dz)?.let { return PlacementResult.Rejected(it) }
         val point = FloorPoint(dx, dz)
-        if (point.distanceTo(FloorPoint.ORIGIN) < MIN_DESTINATION_DISTANCE) {
-            return DestinationResult.Rejected(DestinationRejection.TOO_CLOSE)
+        return when {
+            point.distanceTo(FloorPoint.ORIGIN) < MIN_DESTINATION_DISTANCE ->
+                PlacementResult.Rejected(PlacementRejection.TOO_CLOSE)
+            obstacle?.let { obstacleBlocks(it, point) } == true ->
+                PlacementResult.Rejected(PlacementRejection.BLOCKED_BY_OBSTACLE)
+            else -> PlacementResult.Accepted(copy(destination = point))
         }
-        return DestinationResult.Accepted(copy(destination = point))
+    }
+
+    /** Places (or moves) the manual test obstacle; same coordinates as [placeDestination]. */
+    fun placeObstacle(dx: Float, dy: Float, dz: Float): PlacementResult {
+        floorPointOrRejection(dx, dy, dz)?.let { return PlacementResult.Rejected(it) }
+        val point = FloorPoint(dx, dz)
+        return when {
+            obstacleBlocks(point, FloorPoint.ORIGIN) ->
+                PlacementResult.Rejected(PlacementRejection.COVERS_ROVER)
+            destination?.let { obstacleBlocks(point, it) } == true ->
+                PlacementResult.Rejected(PlacementRejection.COVERS_DESTINATION)
+            else -> PlacementResult.Accepted(copy(obstacle = point))
+        }
+    }
+
+    fun withoutObstacle(): FloorSetup = copy(obstacle = null)
+
+    private fun floorPointOrRejection(dx: Float, dy: Float, dz: Float): PlacementRejection? = when {
+        !roverPlaced -> PlacementRejection.NO_ROVER
+        abs(dy) > MAX_FLOOR_HEIGHT_DIFFERENCE -> PlacementRejection.NOT_SAME_FLOOR
+        abs(dx) > MAX_REACH || abs(dz) > MAX_REACH -> PlacementRejection.OUT_OF_AREA
+        else -> null
     }
 
     companion object {
@@ -62,6 +93,26 @@ data class FloorSetup(
 
         /** The destination must be clearly apart from the rover. */
         const val MIN_DESTINATION_DISTANCE = 0.20f
+
+        /** Half the side of the square play area centered on the rover. */
+        const val PLAY_AREA_HALF_SIZE = 2.5f
+
+        /** Rover footprint radius, used as clearance around obstacles. */
+        const val ROVER_RADIUS = 0.10f
+
+        /** Side of the square manual obstacle. */
+        const val OBSTACLE_SIZE = 0.30f
+
+        /** Things must be placed far enough from the edge for the rover to reach them. */
+        const val MAX_REACH = PLAY_AREA_HALF_SIZE - ROVER_RADIUS
+
+        /** Half side of the area the rover's center cannot enter around an obstacle. */
+        const val OBSTACLE_BLOCKED_HALF_SIZE = OBSTACLE_SIZE / 2 + ROVER_RADIUS
+
+        /** True when the rover's center at [point] would touch the obstacle at [obstacle]. */
+        fun obstacleBlocks(obstacle: FloorPoint, point: FloorPoint): Boolean =
+            abs(point.x - obstacle.x) <= OBSTACLE_BLOCKED_HALF_SIZE &&
+                abs(point.z - obstacle.z) <= OBSTACLE_BLOCKED_HALF_SIZE
     }
 }
 
@@ -73,6 +124,7 @@ enum class SetupHint {
     AIM_AT_FLOOR,
     TAP_TO_PLACE_ROVER,
     TAP_TO_PLACE_DESTINATION,
+    NO_ROUTE,
     READY,
 }
 
@@ -83,6 +135,7 @@ enum class SetupHint {
  * @param anchorStopped the floor anchor will never track again; the player must start over.
  * @param floorDetected at least one floor surface has been found.
  * @param aimingAtFloor the placement reticle currently hits a floor surface.
+ * @param routeBlocked rover and destination are placed but no route connects them.
  */
 fun setupHint(
     setup: FloorSetup,
@@ -90,10 +143,11 @@ fun setupHint(
     anchorStopped: Boolean,
     floorDetected: Boolean,
     aimingAtFloor: Boolean,
+    routeBlocked: Boolean = false,
 ): SetupHint = when {
     setup.roverPlaced && anchorStopped -> SetupHint.ANCHOR_LOST
     !cameraTracking -> SetupHint.TRACKING_LOST
-    setup.phase == SetupPhase.READY -> SetupHint.READY
+    setup.phase == SetupPhase.READY -> if (routeBlocked) SetupHint.NO_ROUTE else SetupHint.READY
     !floorDetected -> SetupHint.SCAN_FLOOR
     !aimingAtFloor -> SetupHint.AIM_AT_FLOOR
     setup.phase == SetupPhase.PLACE_ROVER -> SetupHint.TAP_TO_PLACE_ROVER
