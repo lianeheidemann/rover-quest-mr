@@ -10,6 +10,14 @@ Projeto Android (Kotlin + Gradle) do RoverQuest MR. Visão geral do jogo no [REA
 
 ## Estrutura
 
+```
+game/
+├── settings.gradle.kts        inclui :app e :core
+├── gradle/libs.versions.toml  versões fixas de todas as dependências
+├── app/   (:app)  Android — câmera, AR, interface
+└── core/  (:core) Kotlin puro — regras do jogo + testes JUnit
+```
+
 | Módulo | Conteúdo |
 | --- | --- |
 | `app/` | Aplicativo Android: sessão AR (ARCore + SceneView), interface em Jetpack Compose |
