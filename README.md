@@ -51,7 +51,7 @@ Sua casa vira a fase. Caixas, livros e almofadas de verdade se tornam obstáculo
 
 ## Requisitos
 
-| | |
+| Item | Requisito |
 | --- | --- |
 | Android | 7.0 ou superior |
 | ARCore | Obrigatório: o modelo precisa estar na [lista de dispositivos compatíveis](https://developers.google.com/ar/devices) |
