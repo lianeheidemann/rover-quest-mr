@@ -27,7 +27,7 @@
 
 ## 2. Implementação por partes
 
-### Parte 1 — Aplicativo mínimo
+### Parte 1 — Aplicativo mínimo ✅
 
 - [x] Projeto Kotlin/Compose com dois módulos: `:app` (Android) e `:core` (Kotlin puro).
 - [x] Sessão AR com câmera funcionando no S23 Ultra.
@@ -38,7 +38,7 @@
 
 **Concluído quando:** o APK instala via `adb`, abre a sessão AR no aparelho e o suporte a profundidade está documentado.
 
-### Parte 2 — Piso, rover e destino
+### Parte 2 — Piso, rover e destino ✅
 
 - [x] Detectar o piso e indicar onde é possível posicionar.
 - [x] Tocar para posicionar o rover (forma simples) e o destino.
@@ -50,7 +50,7 @@
 
 **Concluído quando:** rover e destino permanecem alinhados ao piso ao movimentar o celular.
 
-### Parte 3 — Rota com A*
+### Parte 3 — Rota com A* ✅
 
 - [x] Grade local com células livres, ocupadas e desconhecidas.
 - [x] Obstáculo manual para testes.
@@ -65,7 +65,7 @@
 
 **Concluído quando:** a rota contorna o obstáculo manual e os testes rodam sem câmera/ARCore.
 
-### Parte 4 — Ler profundidade
+### Parte 4 — Ler profundidade ✅
 
 - [x] Ler e visualizar a profundidade em um modo de diagnóstico.
 - [x] Avisar quando a leitura estiver indisponível ou incerta.
