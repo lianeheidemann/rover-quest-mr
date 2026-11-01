@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="212" height="28" viewBox="0 0 212 28" role="img" aria-labelledby="title desc">
+  <title id="title">Download APK — versão demo</title>
+  <desc id="desc">Badge com seta de download e os textos DEMO e DOWNLOAD APK.</desc>
+  <clipPath id="r"><rect width="212" height="28" rx="3"/></clipPath>
+  <g clip-path="url(#r)">
+    <rect width="78" height="28" fill="#0B1F3A"/>
+    <rect x="78" width="134" height="28" fill="#1E7BFF"/>
+  </g>
+  <g fill="none" stroke="#3DDC84" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 7v10"/>
+    <path d="M13.5 12.5L18 17l4.5-4.5"/>
+    <path d="M12 21h12"/>
+  </g>
+  <g fill="#FFFFFF" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11" font-weight="700" letter-spacing="1" dominant-baseline="middle">
+    <text x="32" y="14.5" fill="#3DDC84">DEMO</text>
+    <text x="145" y="14.5" text-anchor="middle">DOWNLOAD APK</text>
+  </g>
+</svg>
