@@ -472,12 +472,13 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                     if (diagnosticOn || floorAnchor != null) updateDepth(frame)
                     val state = frame.camera.trackingState
                     if (state != trackingState) trackingState = state
-                    if (!floorDetected) {
-                        floorDetected = session.getAllTrackables(Plane::class.java).any {
-                            it.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
-                                it.trackingState == TrackingState.TRACKING
-                        }
+                    // Live, not latched: in a dark room ARCore can see the floor for a moment and
+                    // lose it again, and the player must not be asked to aim at a floor that is gone.
+                    val floorNow = session.getAllTrackables(Plane::class.java).any {
+                        it.type == Plane.Type.HORIZONTAL_UPWARD_FACING &&
+                            it.trackingState == TrackingState.TRACKING
                     }
+                    if (floorNow != floorDetected) floorDetected = floorNow
                 },
                 onTrackingFailureChanged = { failureReason = it },
                 onSessionFailed = { exception ->
@@ -657,6 +658,10 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             noteText = "Sem profundidade: só o obstáculo virtual bloqueia."
                 .takeIf { setup.roverPlaced && depthSupport == DepthSupport.NONE },
             confirmingArea = hint == SetupHint.CONFIRM_AREA,
+            // Only an area the circle is on can be accepted.
+            canConfirm = reticleHit != null,
+            // Until the rover is placed there is always a way back to scanning.
+            showNewArea = setup.phase == SetupPhase.PLACE_ROVER && playbackFile == null,
             onConfirmArea = { setup = setup.confirmArea() },
             onNewArea = ::chooseNewArea,
             tapMode = tapMode.takeIf { setup.roverPlaced && greeting == null },
@@ -765,6 +770,8 @@ private fun SetupPanel(
     rejectionText: String?,
     noteText: String?,
     confirmingArea: Boolean,
+    canConfirm: Boolean,
+    showNewArea: Boolean,
     onConfirmArea: () -> Unit,
     onNewArea: () -> Unit,
     tapMode: TapMode?,
@@ -820,16 +827,26 @@ private fun SetupPanel(
             )
         }
 
-        if (confirmingArea) {
+        if (confirmingArea || showNewArea) {
             val compact = PaddingValues(horizontal = 14.dp, vertical = 4.dp)
+            if (confirmingArea && !canConfirm) {
+                Text(
+                    "Mire o círculo no piso pontilhado para confirmar.",
+                    color = Color(0xFFFFD54F),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedButton(onClick = onNewArea, contentPadding = compact, modifier = Modifier.height(36.dp)) {
                     Icon(painterResource(R.drawable.ic_new_area), contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Text("Outra área", color = Color.White, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
                 }
-                Button(onClick = onConfirmArea, contentPadding = compact, modifier = Modifier.height(36.dp)) {
-                    Icon(painterResource(R.drawable.ic_confirm), contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Confirmar", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+                if (confirmingArea) {
+                    Button(onClick = onConfirmArea, enabled = canConfirm, contentPadding = compact, modifier = Modifier.height(36.dp)) {
+                        Icon(painterResource(R.drawable.ic_confirm), contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text("Confirmar", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 6.dp))
+                    }
                 }
             }
         }
