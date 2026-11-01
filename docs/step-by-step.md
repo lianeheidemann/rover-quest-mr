@@ -90,8 +90,8 @@
 - [x] Sobreposição visual da grade para depuração.
 - [x] Obstáculo manual continua disponível.
   - **Implementado, ainda não testado no S23 Ultra.** A profundidade vira pontos no frame da âncora
-    do piso (`core/depth/DepthProjection.kt`). Pontos entre 3 e 40 cm de altura votam "obstáculo";
-    pontos no piso (±2 cm) votam "livre"; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
+    do piso (`core/depth/DepthProjection.kt`). Pontos entre 5 e 40 cm de altura votam "obstáculo";
+    pontos no piso (±3 cm) votam "livre", até 2,5 m da câmera; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
     mesa) não votam. Uma célula só muda de estado após 3 votos líquidos, com histerese
     (`core/nav/ObstacleMap.kt`). Obstáculos reais são ampliados pelo raio do rover; o A* só atravessa
     piso visto como livre e, se faltar ver parte do caminho, pede para apontar a câmera. Chip "Mapa":

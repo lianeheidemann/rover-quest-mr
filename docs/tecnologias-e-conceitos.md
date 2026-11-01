@@ -18,7 +18,7 @@ Detectar o piso não basta para reconhecer uma caixa sobre ele. Para isso, o pro
 
 Cada pixel com profundidade válida pode ser convertido em um **ponto 3D** usando os parâmetros internos da câmera (modelo *pinhole*). Depois, o ponto é transformado para as coordenadas da âncora do piso. Assim, é possível estimar **a altura do ponto em relação ao chão**, em vez de considerar somente sua distância até o celular.
 
-Na lógica implementada, pontos próximos ao nível do piso (±2 cm) indicam espaço livre; pontos entre **3 e 40 cm acima dele** podem indicar obstáculos. O ambiente é representado por uma **grade de ocupação** de 5 × 5 metros, dividida em células de 5 cm. Cada célula pode estar **livre, ocupada ou desconhecida**.
+Na lógica implementada, pontos próximos ao nível do piso (±3 cm) indicam espaço livre; pontos entre **5 e 40 cm acima dele** podem indicar obstáculos. O ambiente é representado por uma **grade de ocupação** de 5 × 5 metros, dividida em células de 5 cm. Cada célula pode estar **livre, ocupada ou desconhecida**.
 
 Uma única leitura pode estar errada. Por isso, o mapa reúne evidências e exige **três votos líquidos** antes de mudar o estado de uma célula. Essa estabilidade, chamada de **histerese**, evita que obstáculos apareçam e desapareçam a cada quadro. Áreas que a câmera ainda não observou continuam desconhecidas; não são automaticamente consideradas seguras.
 
