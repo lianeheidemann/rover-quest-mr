@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## Projeto
-RoverQuest MR: jogo educativo de RA para Android (Kotlin). Um rover virtual usa A* para desviar
+RoverQuest MR: jogo de RA para Android (Kotlin), focado em diversão. Um rover virtual usa A* para desviar
 de obstáculos reais detectados pela ARCore Depth API. Aparelho de teste: Galaxy S23 Ultra.
 
 O plano oficial é `docs/step-by-step.md`. Leia antes de implementar e siga a ordem das partes.

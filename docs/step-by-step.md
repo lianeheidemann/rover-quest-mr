@@ -2,7 +2,7 @@
 
 > **Status:** planejamento; implementação ainda não iniciada.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
-> **Objetivo:** criar um jogo educativo de robótica em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
+> **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
 
 ## 1. Decisões técnicas
@@ -124,7 +124,7 @@
 
 **Concluído quando:** o rover virtual chega ao destino contornando a caixa real em um cenário controlado.
 
-### Parte 7 — Tornar o projeto útil e divertido
+### Parte 7 — Tornar o jogo divertido
 
 - [ ] Criar **Missão 01 — Desvie do obstáculo**.
 - [ ] Exibir controles intuitivos: escanear, posicionar, escolher destino, iniciar e reiniciar.

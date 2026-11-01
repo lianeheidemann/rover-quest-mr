@@ -5,5 +5,5 @@
 <h1 align="center">RoverQuest MR</h1>
 
 <p align="center">
-  Aplicação Android de realidade mista para o ensino de robótica: um rover virtual percebe o ambiente real por meio de sensoriamento de profundidade, constrói um mapa de ocupação e planeja rotas com A* para contornar obstáculos físicos.
+  Jogo de realidade mista para Android em que você guia um pequeno rover virtual pela sua casa: ele enxerga os objetos reais ao redor e encontra sozinho o caminho para desviar deles.
 </p>
