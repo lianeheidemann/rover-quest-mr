@@ -16,6 +16,17 @@ android {
         versionName = "0.1.0"
     }
 
+    // Shared debug key so APKs from CI, Releases and local builds can update each other.
+    // Not a secret: it only signs debug builds.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

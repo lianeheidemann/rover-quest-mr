@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: game
@@ -21,5 +23,25 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v5
+
       - name: Test core and build debug APK
         run: ./gradlew :core:test :app:assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: roverquest-debug-apk
+          path: game/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+      - name: Publish release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep -oP 'versionName = "\K[^"]+' app/build.gradle.kts)
+          TAG="v${VERSION}-build.${GITHUB_RUN_NUMBER}"
+          APK="RoverQuestMR-${TAG}.apk"
+          cp app/build/outputs/apk/debug/app-debug.apk "$APK"
+          gh release create "$TAG" "$APK" --target "$GITHUB_SHA" \
+            --title "RoverQuest MR $TAG" --generate-notes --prerelease
