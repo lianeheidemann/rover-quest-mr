@@ -691,8 +691,9 @@ private fun StatusBar(
                 IconToggle(R.drawable.ic_more, "Mais opções", selected = false) { menuOpen = true }
                 DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                     DropdownMenuItem(
-                        text = { Text("Escolher outra área") },
-                        leadingIcon = { Icon(painterResource(R.drawable.ic_new_area), contentDescription = null) },
+                        // Starts the game over: new floor scan, rover, destination and map cleared.
+                        text = { Text("Resetar jogo") },
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_reset_game), contentDescription = null) },
                         onClick = {
                             menuOpen = false
                             onNewArea()
