@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-label="Âncoras e coordenadas locais">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2878DB"/></marker></defs><style>
+text{font-family:Inter,Arial,Helvetica,sans-serif;fill:#17243B}
+.h{font-size:27px;font-weight:700}.sub{font-size:14px;fill:#63738A}
+.lab{font-size:15px;font-weight:600}.hint{font-size:13px;fill:#56657B}
+.tick{font-size:13px;font-weight:600}
+</style>
+<rect width="960" height="520" rx="16" fill="#F8FAFC"/>
+<text x="38" y="45" class="h">Âncoras e coordenadas locais</text><text x="38" y="70" class="sub">Um mesmo objeto virtual mantém sua posição quando a câmera muda de lugar.</text>
+<path d="M38 89H922" stroke="#E1E8F1" stroke-width="1.5"/>
+<g><rect x="55" y="163" width="140" height="211" rx="22" fill="#26374D"/>
+<rect x="64" y="175" width="122" height="185" rx="13" fill="#ECF2F8"/>
+<circle cx="125" cy="171" r="3" fill="#95A6BB"/></g><g><rect x="767" y="163" width="140" height="211" rx="22" fill="#26374D"/>
+<rect x="776" y="175" width="122" height="185" rx="13" fill="#ECF2F8"/>
+<circle cx="837" cy="171" r="3" fill="#95A6BB"/></g>
+<path d="M86 293L160 293M86 314L160 314" stroke="#BECBDD" stroke-width="2"/>
+<path d="M802 293L874 293M802 314L874 314" stroke="#BECBDD" stroke-width="2"/>
+<rect x="65" y="388" rx="9" width="124" height="32" fill="#E8F1FD"/><text x="77" y="409" class="lab">Vista inicial</text><rect x="776" y="388" rx="9" width="117" height="32" fill="#E8F1FD"/><text x="788" y="409" class="lab">Outra vista</text>
+<path d="M203 172Q478 83 755 172" fill="none" stroke="#91ADD2" stroke-width="2.4" stroke-dasharray="7 8" marker-end="url(#arrow)"/>
+<rect x="381" y="123" rx="9" width="200" height="32" fill="#E8F1FD"/><text x="393" y="144" class="lab">Celular em movimento</text>
+<path d="M243 247L703 247L730 390L220 390Z" fill="#EAF2FA" stroke="#B1C5DD" stroke-width="2"/>
+<path d="M236 293H713M230 338H722M348 247L321 390M495 247L495 390M624 247L663 390" stroke="#D1DEEC" stroke-width="1.6"/>
+<ellipse cx="342" cy="335" rx="57" ry="13" fill="none" stroke="#149E9B" stroke-width="3"/>
+<g transform="translate(311 266) scale(0.57)">
+<ellipse cx="52" cy="77" rx="75" ry="12" fill="#C9D6E4" opacity=".45"/>
+<rect x="-8" y="45" width="25" height="39" rx="9" fill="#263449"/><rect x="86" y="45" width="25" height="39" rx="9" fill="#263449"/>
+<rect x="1" y="38" width="100" height="41" rx="10" fill="#E3EDF8" stroke="#8DAAC8" stroke-width="2"/>
+<path d="M13 41H89L96 54H7Z" fill="#FFFFFF"/><rect x="35" y="48" width="36" height="13" rx="3" fill="#448DE8"/>
+<path d="M53 38V12" stroke="#647B96" stroke-width="7"/><rect x="35" y="0" width="38" height="22" rx="5" fill="#2C415A"/><circle cx="61" cy="11" r="6" fill="#4BA3DE"/>
+</g>
+<circle cx="342" cy="333" r="5" fill="#277AE5"/>
+<path d="M342 333L413 333" stroke="#1D8F89" stroke-width="3" marker-end="url(#arrow)"/>
+<path d="M342 333L342 261" stroke="#2878DB" stroke-width="3" marker-end="url(#arrow)"/>
+<text x="417" y="338" class="tick">X</text><text x="350" y="270" class="tick">Y</text>
+<path d="M385 322L507 322L507 280L659 280" fill="none" stroke="#2878DB" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M656 280l-13 -8v16z" fill="#2878DB"/>
+<circle cx="663" cy="280" r="12" fill="#0E9F95" stroke="#FFFFFF" stroke-width="4"/>
+<rect x="247" y="400" rx="9" width="156" height="32" fill="#E8F1FD"/><text x="259" y="421" class="lab">Âncora e eixos</text>
+<rect x="500" y="340" rx="9" width="120" height="32" fill="#E8F1FD"/><text x="512" y="361" class="lab">Rota local</text>
+<rect x="621" y="215" rx="9" width="100" height="32" fill="#E8F1FD"/><text x="633" y="236" class="lab">Destino</text>
+
+<path d="M38 454H922" stroke="#E1E8F1" stroke-width="1.5"/>
+<text x="38" y="482" style="font-size:16px;font-weight:600;fill:#23538B">Rover, destino e rota usam a mesma referência espacial, não a posição da tela.</text>
+</svg>
