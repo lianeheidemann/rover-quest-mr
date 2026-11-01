@@ -1,16 +1,40 @@
 # Tecnologias e conceitos do RoverQuest MR
 
-O **RoverQuest MR** é um jogo Android em que um rover virtual é colocado no chão de uma sala. O jogador escolhe um destino e o aplicativo calcula uma rota. A proposta é que essa rota considere não apenas obstáculos virtuais, mas também objetos reais, como uma caixa no piso.
+O **RoverQuest MR** é um jogo Android em que um rover virtual é colocado no piso, recebe um destino e precisa encontrar uma rota. A ideia de **realidade misturada** é fazer essa rota considerar também o ambiente físico, como uma caixa real no caminho — não apenas objetos desenhados na tela.
 
-Para entender como isso funciona, é útil acompanhar o caminho dos dados: **a câmera identifica o espaço, o aplicativo constrói um mapa e um algoritmo procura por onde o rover pode passar**.
+Para entender o projeto, vale seguir o processo: **localizar o celular, descobrir onde o jogador tocou, fixar o rover no espaço, interpretar obstáculos e calcular a rota**.
 
-## 1. Como o celular localiza o rover no mundo real?
+## 1. Conceitos fundamentais de realidade misturada
 
-O **ARCore** combina imagens da câmera com leituras de sensores, como giroscópio e acelerômetro, para estimar continuamente a posição e a orientação do celular. Esse processo é chamado de **rastreamento espacial (*tracking*)**. É ele que permite olhar para o rover de ângulos diferentes sem que o objeto acompanhe o movimento da tela.
+### Rastreamento espacial (*tracking*) e SLAM
 
-O ARCore também identifica **planos**, isto é, regiões que parecem superfícies planas. Neste projeto, interessam os planos horizontais voltados para cima, usados para posicionar o rover no piso. Isso **não significa que o ARCore reconheça o objeto como “chão”** ou saiba, por si só, se há algo bloqueando a passagem.
+Para manter um objeto virtual no mesmo lugar enquanto você anda pela sala, o aplicativo precisa estimar **onde o celular está e para onde aponta**. O ARCore combina imagens da câmera e sensores de movimento para atualizar essa estimativa continuamente. Esse tipo de localização e mapeamento do ambiente está relacionado ao **SLAM** (*Simultaneous Localization and Mapping*).
 
-Quando o jogador toca na tela, um **hit test** verifica onde a direção correspondente ao toque encontra o plano detectado. Nesse ponto é criada uma **âncora (*anchor*)**, uma referência espacial que o ARCore continua acompanhando. Rover, destino, obstáculos virtuais e rota usam posições relativas à mesma âncora, mantendo-se alinhados ao piso. Esse alinhamento é aproximado: erros de rastreamento podem causar pequenos deslocamentos.
+A posição e a orientação de um objeto formam sua **pose**. Em RA, o rastreamento trabalha com seis graus de liberdade (**6DoF**): três para a posição (x, y, z) e três para a orientação. Se o rastreamento for perdido, o posicionamento dos elementos virtuais deixa de ser confiável.
+
+### Detecção de planos (*plane detection*)
+
+O ARCore procura regiões que correspondem a superfícies aproximadamente planas, como pisos, mesas e paredes. O RoverQuest utiliza **planos horizontais voltados para cima** para escolher onde colocar o rover.
+
+Detectar um plano **não é reconhecer semanticamente o chão** nem garantir que sua superfície está livre: uma caixa pode estar apoiada sobre o plano detectado.
+
+### Hit test (*raycast*): como um toque encontra o piso
+
+O toque acontece em uma **coordenada 2D da tela**, mas o rover precisa de uma **posição 3D no ambiente**. O **[hit test](https://developers.google.com/ar/develop/hit-test)** resolve essa diferença: o ARCore projeta um raio a partir da câmera na direção correspondente ao ponto tocado e procura interseções com a geometria que conhece.
+
+O resultado de uma interseção (*hit result*) inclui a **pose do ponto atingido**. No RoverQuest, interessa o resultado sobre o **plano do piso**. É assim que um toque pode indicar onde colocar o rover ou seu destino, em vez de simplesmente desenhar um objeto na posição da tela.
+
+O ARCore também pode oferecer resultados em **pontos característicos da imagem** ou em **pontos de profundidade**, quando disponíveis. São formas diferentes de encontrar uma posição espacial; **hit test não é detecção de colisão nem identificação de obstáculos**.
+
+Um **retículo (*reticle*)** é a marca visual que indica ao jogador o local estimado para posicionamento antes de confirmar a ação.
+
+### Âncoras, coordenadas e orientação
+
+A posição encontrada pelo hit test é expressa no **espaço 3D estimado pelo ARCore** (*world space*). Uma **[âncora (*anchor*)](https://developers.google.com/ar/develop/anchors)** permite manter conteúdo virtual associado a essa referência, mesmo quando o ARCore ajusta sua estimativa do ambiente.
+
+No jogo, a âncora é criada ao colocar o rover no piso. Destino, rota e obstáculos virtuais usam **coordenadas relativas à mesma âncora**: por exemplo, "50 cm à frente do rover" continua sendo a mesma posição no sistema local, mesmo quando o celular muda de lugar. A âncora reduz deslocamentos aparentes, mas não elimina erros de rastreamento.
+
+**Em sequência:** o ARCore detecta o plano → o retículo indica uma posição possível → o jogador toca → o hit test encontra o ponto 3D → o aplicativo estabelece a âncora → os elementos são desenhados em relação a ela.
 
 ## 2. Como um objeto real vira um obstáculo no mapa?
 
@@ -32,11 +56,17 @@ Em seguida, o algoritmo **A\* (*A-star*)** procura uma rota de menor custo entre
 
 Com o mapa de profundidade ativo, a navegação considera apenas células observadas como livres e pode pedir que o jogador aponte a câmera para uma região ainda desconhecida. Também existe um **obstáculo manual**, inserido pelo jogador, para testar desvios mesmo sem profundidade. Nesse modo de teste, o caminho pode atravessar células ainda desconhecidas; isso **não equivale a confirmar que o chão real está desobstruído**.
 
-## 4. Onde entra a realidade misturada?
+## 4. Quando isso se torna realidade misturada?
 
-Na **realidade aumentada (RA)**, elementos digitais são sobrepostos à visão do ambiente, como o rover desenhado sobre o chão. O objetivo de **realidade misturada (MR)** aparece quando características do espaço físico passam a afetar o comportamento desses elementos: por exemplo, uma caixa real faz o algoritmo escolher outro caminho.
+**Realidade aumentada (RA)** é a sobreposição de conteúdo virtual à visão do mundo físico. **Realidade misturada (MR)** destaca a integração espacial e a interação entre esses dois mundos. Os termos podem se sobrepor; não são tecnologias completamente separadas.
 
-Portanto, o diferencial do RoverQuest MR não é apenas mostrar um modelo 3D pela câmera, mas **usar informações do ambiente para orientar a navegação virtual**. Não há um robô físico: o rover e sua movimentação são simulados.
+No RoverQuest, o **hit test** permite que uma ação na tela tenha significado no espaço real, e a **âncora** mantém o rover no lugar escolhido. Já a **profundidade** permite estimar se há um objeto real ocupando parte do caminho. O objetivo é que essa informação altere a rota calculada pelo **A\***. É essa resposta do elemento virtual ao ambiente físico que caracteriza a proposta de MR do jogo.
+
+Dois conceitos relacionados ajudam a não confundir as funções:
+- **Oclusão:** um objeto físico aparece à frente de um objeto virtual, escondendo a parte que estaria atrás dele. Exige informações de profundidade e tratamento visual; **não é a mesma coisa que evitar obstáculos**.
+- **Colisão ou interação física:** um elemento virtual reage à presença de uma superfície ou obstáculo real. No RoverQuest, a interação pretendida é o **desvio por planejamento de rota**, não uma simulação completa de física.
+
+O rover não é um robô físico. A **detecção de obstáculos reais** já possui código implementado, mas ainda depende de validação no aparelho; seu **movimento automático** ao longo da rota é uma etapa futura.
 
 ## 5. O papel de cada tecnologia
 
