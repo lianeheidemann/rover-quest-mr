@@ -6,6 +6,8 @@
 
 <p align="center">
   <img src="assets/badge/badge_em-construcao-azul-v1.svg">
+  <br>
+  <br><img width="50%"  alt="1000443014" src="https://github.com/user-attachments/assets/0c37bd42-bba8-4ec1-bc2e-f543929126c9" />
 </p>
 
 <p align="center">
