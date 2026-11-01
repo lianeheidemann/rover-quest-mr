@@ -64,6 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.google.ar.core.Anchor
@@ -591,11 +592,16 @@ private fun StatusBar(
                 .size(8.dp)
                 .background(if (tracking) Color(0xFF66BB6A) else Color(0xFFFFB300), CircleShape),
         )
+        // Long warnings are cut short so the icons (above all the torch) never leave the screen.
         Text(
             trackingText,
             color = Color.White,
             style = MaterialTheme.typography.labelLarge,
-            modifier = Modifier.padding(end = 6.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .weight(1f, fill = false)
+                .padding(end = 6.dp),
         )
         if (showGameTools) {
             IconToggle(R.drawable.ic_depth, "Profundidade", diagnosticOn, onToggleDiagnostic)
@@ -752,7 +758,7 @@ private fun trackingLabel(state: TrackingState, reason: TrackingFailureReason?):
     TrackingState.TRACKING -> "Rastreando"
     TrackingState.STOPPED -> "Rastreamento parado"
     TrackingState.PAUSED -> when (reason) {
-        TrackingFailureReason.INSUFFICIENT_LIGHT -> "Pouca luz: ligue a lanterna"
+        TrackingFailureReason.INSUFFICIENT_LIGHT -> "Pouca luz: use a lanterna"
         TrackingFailureReason.EXCESSIVE_MOTION -> "Mova mais devagar"
         TrackingFailureReason.INSUFFICIENT_FEATURES -> "Aponte para mais detalhes"
         TrackingFailureReason.CAMERA_UNAVAILABLE -> "Câmera indisponível"
