@@ -165,6 +165,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     val obstacleMap = remember { newObstacleMap() }
     var mapVersion by remember { mutableIntStateOf(0) }
     var showMap by remember { mutableStateOf(false) }
+    // Phone torch, for playing in dim rooms: more light also helps tracking and depth.
+    var torchOn by remember { mutableStateOf(false) }
     val mapping = depthSupport == DepthSupport.AUTOMATIC_ONLY || depthSupport == DepthSupport.AUTOMATIC_AND_RAW
 
     val route = remember(setup, mapVersion, mapping) { planRoute(setup, obstacleMap.takeIf { mapping }) }
@@ -348,6 +350,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 // Depth feeds the obstacle map (Part 5) and the diagnostics (Part 4).
                 // ARSceneView downgrades it to DISABLED where it is not supported.
                 depthMode = Config.DepthMode.AUTOMATIC,
+                // ARCore silently keeps the torch off on devices that cannot drive it.
+                flashMode = if (torchOn) Config.FlashMode.TORCH else Config.FlashMode.OFF,
                 onSessionUpdated = { session, frame ->
                     recorder.recordFrame(session)
                     if (diagnosticOn || floorAnchor != null) updateDepth(frame)
@@ -493,6 +497,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 trackingText = trackingLabel(trackingState, failureReason),
                 diagnosticOn = diagnosticOn,
                 onToggleDiagnostic = { setDiagnostic(!diagnosticOn) },
+                torchOn = torchOn,
+                onToggleTorch = { torchOn = !torchOn },
                 showMap = showMap,
                 onToggleMap = {
                     showMap = !showMap
@@ -544,6 +550,8 @@ private fun StatusBar(
     trackingText: String,
     diagnosticOn: Boolean,
     onToggleDiagnostic: () -> Unit,
+    torchOn: Boolean,
+    onToggleTorch: () -> Unit,
     showMap: Boolean,
     onToggleMap: () -> Unit,
 ) {
@@ -562,6 +570,7 @@ private fun StatusBar(
         Text(trackingText, color = Color.White, style = MaterialTheme.typography.labelLarge)
         CompactChip(label = "Profundidade", selected = diagnosticOn, onClick = onToggleDiagnostic)
         CompactChip(label = "Mapa", selected = showMap, onClick = onToggleMap)
+        CompactChip(label = "\uD83D\uDD26", selected = torchOn, onClick = onToggleTorch) // 🔦 torch
     }
 }
 
@@ -648,7 +657,7 @@ private fun trackingLabel(state: TrackingState, reason: TrackingFailureReason?):
     TrackingState.TRACKING -> "Rastreando"
     TrackingState.STOPPED -> "Rastreamento parado"
     TrackingState.PAUSED -> when (reason) {
-        TrackingFailureReason.INSUFFICIENT_LIGHT -> "Pouca luz"
+        TrackingFailureReason.INSUFFICIENT_LIGHT -> "Pouca luz: toque em \uD83D\uDD26"
         TrackingFailureReason.EXCESSIVE_MOTION -> "Mova mais devagar"
         TrackingFailureReason.INSUFFICIENT_FEATURES -> "Aponte para mais detalhes"
         TrackingFailureReason.CAMERA_UNAVAILABLE -> "Câmera indisponível"
