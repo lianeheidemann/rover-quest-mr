@@ -1,6 +1,6 @@
 # RoverQuest MR — Guia de implementação passo a passo
 
-> **Status:** Partes 1 a 4 concluídas e validadas no S23 Ultra; Parte 5 implementada, aguardando validação no aparelho.  
+> **Status:** Partes 1 a 4 validadas no S23 Ultra; Partes 5 e 6 implementadas, aguardando validação no aparelho.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -102,9 +102,14 @@
 
 ### Parte 6 — Navegação do rover
 
-- [ ] Rover segue a rota com movimento suave.
-- [ ] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
-- [ ] Replaneja quando o mapa muda de forma estável.
+- [x] Rover segue a rota com movimento suave.
+- [x] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
+- [x] Replaneja quando o mapa muda de forma estável.
+  - **Implementado, ainda não testado no S23 Ultra.** Botão ▶ inicia o trajeto; o rover anda a
+    15 cm/s, gira no lugar quando precisa virar mais de 20° e passa exatamente pelos cantos da rota
+    (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
+    rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
+    mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
 
 **Concluído quando:** o rover chega ao destino contornando a caixa real. **(MVP)**
 
@@ -149,4 +154,4 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 
 Ver [references.md](references.md).
 
-> **Próxima ação:** executar **apenas a Parte 5**. Não implementar todas as partes ao mesmo tempo.
+> **Próxima ação:** validar as Partes 5 e 6 no aparelho. Não implementar todas as partes ao mesmo tempo.

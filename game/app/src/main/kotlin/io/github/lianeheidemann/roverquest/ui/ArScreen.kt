@@ -1,6 +1,12 @@
 package io.github.lianeheidemann.roverquest.ui
 
 import android.util.Log
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.LaunchedEffect
+import io.github.lianeheidemann.roverquest.core.floor.FloorPoint
+import io.github.lianeheidemann.roverquest.core.nav.MotionStatus
+import io.github.lianeheidemann.roverquest.core.nav.RoverMotion
 import io.github.lianeheidemann.roverquest.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -184,16 +190,66 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     var torchOn by remember { mutableStateOf(false) }
     val mapping = depthSupport == DepthSupport.AUTOMATIC_ONLY || depthSupport == DepthSupport.AUTOMATIC_AND_RAW
 
-    val route = remember(setup, mapVersion, mapping) { planRoute(setup, obstacleMap.takeIf { mapping }) }
+    // Rover driving along the route (Part 6). Routes are planned from where the rover is: its
+    // pose when idle, and the pose at the last replan while driving.
+    var motion by remember { mutableStateOf(RoverMotion()) }
+    var routeStart by remember { mutableStateOf(FloorPoint.ORIGIN) }
+    val route = remember(setup, mapVersion, mapping, routeStart) {
+        planRoute(setup, obstacleMap.takeIf { mapping }, rover = routeStart)
+    }
     // The debug overlay is rebuilt at most once per second: it is many small quads.
     var overlayVersion by remember { mutableIntStateOf(0) }
     var lastOverlayAtNs by remember { mutableLongStateOf(0L) }
     val overlayColors = remember(setup, overlayVersion, mapping, showMap) {
-        if (showMap) gridColors(buildGrid(setup, obstacleMap.takeIf { mapping }), obstacleMap.takeIf { mapping }) else null
+        if (showMap) gridColors(buildGrid(setup, obstacleMap.takeIf { mapping }, routeStart), obstacleMap.takeIf { mapping }) else null
     }
-    val heading = remember(setup, route) { roverHeading(setup, (route as? RoutePlan.Route)?.points) }
+    // Idle, the rover faces where it will go; once started, its own pose drives it.
+    val idleHeading = remember(setup, route, motion.pose.position) {
+        roverHeading(setup, (route as? RoutePlan.Route)?.points, from = motion.pose.position)
+    }
+    val roverPose = if (motion.status == MotionStatus.IDLE) motion.pose.copy(heading = idleHeading) else motion.pose
     val routeDots = remember(route) {
         (route as? RoutePlan.Route)?.let { samplePoints(it.points, ROUTE_DOT_SPACING) }.orEmpty()
+    }
+    // Dots the rover already drove over are hidden; dot i sits (i + 1) spacings along the route.
+    val hiddenDots = if (motion.isRunning) (motion.progress / ROUTE_DOT_SPACING).toInt() else 0
+
+    // Keep planning from the rover: from its pose while it waits, and from where it is whenever
+    // the setup or the map changes while it drives (replanning).
+    LaunchedEffect(motion.status) {
+        if (!motion.isRunning) routeStart = motion.pose.position
+    }
+    LaunchedEffect(setup, mapVersion) {
+        if (motion.isRunning) routeStart = motion.pose.position
+    }
+    LaunchedEffect(route) {
+        val points = (route as? RoutePlan.Route)?.points
+        if (motion.isRunning && points != null) motion = motion.withRoute(points)
+    }
+    val currentRoute by rememberUpdatedState(route)
+    val roverTracking = trackingState == TrackingState.TRACKING && anchorState == TrackingState.TRACKING
+    val currentTracking by rememberUpdatedState(roverTracking)
+    LaunchedEffect(motion.isRunning) {
+        if (!motion.isRunning) return@LaunchedEffect
+        var last = 0L
+        while (true) {
+            withFrameNanos { now ->
+                val seconds = if (last == 0L) 0f else ((now - last) / 1e9f).coerceAtMost(0.1f)
+                last = now
+                motion = motion.step(seconds, currentTracking, currentRoute is RoutePlan.Route)
+            }
+            if (!motion.isRunning) break
+        }
+    }
+
+    fun go() {
+        val points = (route as? RoutePlan.Route)?.points ?: return
+        motion = motion.copy(pose = roverPose).start(points)
+        Log.i(TAG, "Rover started: ${points.size} waypoints")
+    }
+
+    fun stopRover() {
+        motion = motion.stop()
     }
 
     fun onTap() {
@@ -213,12 +269,14 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         }
         val local = anchor.pose.inverse().transformPoint(hit.hitPose.translation)
         val result = when (tapMode) {
-            TapMode.DESTINATION -> setup.placeDestination(local[0], local[1], local[2])
-            TapMode.OBSTACLE -> setup.placeObstacle(local[0], local[1], local[2])
+            TapMode.DESTINATION -> setup.placeDestination(local[0], local[1], local[2], rover = motion.pose.position)
+            TapMode.OBSTACLE -> setup.placeObstacle(local[0], local[1], local[2], rover = motion.pose.position)
         }
         when (result) {
             is PlacementResult.Accepted -> {
                 setup = result.setup
+                // A new destination after arriving: wait for the player to start again.
+                if (motion.status == MotionStatus.ARRIVED) motion = motion.stop()
                 Log.i(TAG, "Placed $tapMode: destination=${setup.destination} obstacle=${setup.obstacle}")
             }
             is PlacementResult.Rejected -> rejection = result.reason
@@ -231,6 +289,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         setup = setup.reset()
         rejection = null
         tapMode = TapMode.DESTINATION
+        motion = RoverMotion()
+        routeStart = FloorPoint.ORIGIN
         // The map lives in the old anchor's frame.
         obstacleMap.clear()
         mapVersion++
@@ -341,6 +401,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         aimingAtFloor = reticleHit != null,
         routeBlocked = route is RoutePlan.Blocked,
         routeNeedsScan = route is RoutePlan.NeedsScan,
+        driving = motion.isRunning,
+        arrived = motion.status == MotionStatus.ARRIVED,
     )
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -432,7 +494,10 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                     ) {
                         val model = roverModel
                         // The rover turns to face where it will go: the route, or the destination.
-                        Node(rotation = Rotation(y = heading)) {
+                        Node(
+                            position = Position(x = roverPose.position.x, z = roverPose.position.z),
+                            rotation = Rotation(y = roverPose.heading),
+                        ) {
                             if (model != null) {
                                 // Standing on the floor at the anchor origin, facing -Z.
                                 ModelNode(
@@ -474,8 +539,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                                 version = overlayVersion,
                             )
                         }
-                        for (dot in routeDots) {
-                            key(dot) {
+                        routeDots.forEachIndexed { index, dot ->
+                            if (index >= hiddenDots) key(dot) {
                                 CylinderNode(
                                     radius = 0.015f,
                                     height = 0.003f,
@@ -567,6 +632,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             onRemoveObstacle = { setup = setup.withoutObstacle() },
             showRestart = setup.roverPlaced,
             onRestart = ::restart,
+            canGo = setup.phase == SetupPhase.READY && route is RoutePlan.Route &&
+                !motion.isRunning && motion.status != MotionStatus.ARRIVED,
+            driving = motion.isRunning,
+            onGo = ::go,
+            onStop = ::stopRover,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
@@ -665,6 +735,10 @@ private fun SetupPanel(
     onRemoveObstacle: () -> Unit,
     showRestart: Boolean,
     onRestart: () -> Unit,
+    canGo: Boolean,
+    driving: Boolean,
+    onGo: () -> Unit,
+    onStop: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val background = if (warning) Color(0xFFB71C1C) else Color.Black
@@ -706,7 +780,7 @@ private fun SetupPanel(
             }
         }
 
-        if (tapMode != null || hasObstacle || showRestart) {
+        if (tapMode != null || hasObstacle || showRestart || canGo || driving) {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -739,6 +813,9 @@ private fun SetupPanel(
                 }
                 if (hasObstacle) IconToggle(R.drawable.ic_remove, "Tirar obstáculo", selected = false, onClick = onRemoveObstacle)
                 if (showRestart) IconToggle(R.drawable.ic_restart, "Recomeçar", selected = false, onClick = onRestart)
+                // Start (purple, the main action) or stop the rover.
+                if (driving) IconToggle(R.drawable.ic_stop, "Parar o rover", selected = true, onClick = onStop)
+                else if (canGo) IconToggle(R.drawable.ic_play, "Ir até o destino", selected = true, onClick = onGo)
             }
         }
     }
@@ -798,7 +875,9 @@ private fun hintLabel(hint: SetupHint, blocked: NoPathReason?): String = when (h
         NoPathReason.GOAL_BLOCKED -> "Destino num obstáculo: mova o destino."
         else -> "Sem caminho: mova obstáculo ou destino."
     }
-    SetupHint.READY -> "Rota calculada."
+    SetupHint.READY -> "Rota pronta: toque em ▶."
+    SetupHint.DRIVING -> "Rover a caminho…"
+    SetupHint.ARRIVED -> "Chegou! Marque outro destino."
 }
 
 private fun rejectionLabel(reason: PlacementRejection): String = when (reason) {
