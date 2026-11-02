@@ -17,6 +17,12 @@ const val TURN_IN_PLACE_ABOVE = 20f
 /** Closer than this, in meters, a waypoint counts as reached. */
 const val WAYPOINT_REACHED = 0.02f
 
+/**
+ * The rover stops this far, in meters, from the destination's center: just short of the
+ * marker instead of on top of it. Smaller than the closest a destination can be placed.
+ */
+const val ARRIVAL_DISTANCE = 0.15f
+
 /** Where the rover is on the floor (anchor frame) and where its front (-Z) points, in degrees. */
 data class RoverPose(val position: FloorPoint = FloorPoint.ORIGIN, val heading: Float = 0f)
 
@@ -102,13 +108,15 @@ data class RoverMotion(
 
         while (time > 1e-4f) {
             // Waypoints within reach are taken exactly, so corners are not cut.
-            while (index < route.size && position.distanceTo(route[index]) < WAYPOINT_REACHED) {
+            while (index < route.size - 1 && position.distanceTo(route[index]) < WAYPOINT_REACHED) {
                 position = route[index]
                 index++
             }
-            if (index >= route.size) {
+            val last = index >= route.size - 1
+            // The destination is reached just short of its marker.
+            if (index >= route.size || (last && position.distanceTo(route.last()) <= ARRIVAL_DISTANCE + 1e-4f)) {
                 return copy(
-                    pose = RoverPose(route.last(), heading),
+                    pose = RoverPose(position, heading),
                     status = MotionStatus.ARRIVED,
                     pauseReason = null,
                     target = route.size - 1,
@@ -129,7 +137,8 @@ data class RoverMotion(
             heading = normalizeDegrees(heading + error.coerceIn(-maxTurn, maxTurn))
 
             val distance = position.distanceTo(waypoint)
-            val travel = min(ROVER_SPEED * time, distance)
+            val stopAt = if (last) distance - ARRIVAL_DISTANCE else distance
+            val travel = min(ROVER_SPEED * time, stopAt)
             val t = travel / distance
             position = FloorPoint(position.x + (waypoint.x - position.x) * t, position.z + (waypoint.z - position.z) * t)
             time -= travel / ROVER_SPEED

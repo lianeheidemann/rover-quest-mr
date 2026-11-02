@@ -83,6 +83,7 @@ Pacote `io.github.lianeheidemann.roverquest.core`, organizado por domínio:
 | `nav` | `OccupancyGrid.kt` | Grade de células de 5 cm em 5 × 5 m centrada no rover: livre, ocupada ou desconhecida |
 | | `AStar.kt` | A* com 8 vizinhos, sem cortar quinas, com o motivo quando não há rota |
 | | `RoutePlanner.kt` | Monta a grade a partir do `FloorSetup`, roda o A*, simplifica a rota e gera os pontos para desenhar |
+| | `RoverDance.kt` | Dancinha de vitória ao chegar ao destino: balança, gira e pula |
 | | `RoverGreeting.kt` | Animação de saudação ao colocar o rover: meia-volta, vem até o jogador, cumprimenta e volta |
 
 Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos imutáveis

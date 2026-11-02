@@ -40,7 +40,9 @@ class RoverMotionTest {
 
         val done = halfway.run(3f)
         assertEquals(MotionStatus.ARRIVED, done.status)
-        assertEquals(FloorPoint(0f, -0.6f), done.pose.position)
+        // Stops just short of the destination marker, not on top of it.
+        assertEquals(0f, done.pose.position.x, 1e-4f)
+        assertEquals(-0.6f + ARRIVAL_DISTANCE, done.pose.position.z, 1e-3f)
         assertFalse(done.isRunning)
     }
 
@@ -61,7 +63,8 @@ class RoverMotionTest {
         val corner = listOf(FloorPoint.ORIGIN, FloorPoint(0f, -0.3f), FloorPoint(0.3f, -0.3f))
         val done = RoverMotion().start(corner).run(10f)
         assertEquals(MotionStatus.ARRIVED, done.status)
-        assertEquals(FloorPoint(0.3f, -0.3f), done.pose.position)
+        assertEquals(0.3f - ARRIVAL_DISTANCE, done.pose.position.x, 1e-3f)
+        assertEquals(-0.3f, done.pose.position.z, 1e-4f)
         // Faces +X at the end: heading of -90 degrees.
         assertEquals(headingDegrees(FloorPoint(0f, -0.3f), FloorPoint(0.3f, -0.3f)), done.pose.heading, 1f)
     }

@@ -8,6 +8,7 @@ import io.github.lianeheidemann.roverquest.core.floor.FloorPoint
 import io.github.lianeheidemann.roverquest.core.nav.MotionStatus
 import io.github.lianeheidemann.roverquest.core.nav.RoverMotion
 import io.github.lianeheidemann.roverquest.core.nav.RoverGreeting
+import io.github.lianeheidemann.roverquest.core.nav.RoverDance
 import io.github.lianeheidemann.roverquest.R
 import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -201,6 +202,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     // When first placed, the rover drives up to the player to say hello, then goes back.
     var greeting by remember { mutableStateOf<RoverGreeting?>(null) }
     var greeted by remember { mutableStateOf(false) }
+    // Victory dance when the rover reaches the destination.
+    var dance by remember { mutableStateOf<RoverDance?>(null) }
     // Bumped when the rover is removed, to load a fresh model for the next one (see roverModel).
     var roverModelGeneration by remember { mutableIntStateOf(0) }
     // Latest camera position in world space; read when the rover is placed.
@@ -220,8 +223,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     }
     val roverPose = greeting?.pose
         ?: if (motion.status == MotionStatus.IDLE) motion.pose.copy(heading = idleHeading) else motion.pose
-    val routeDots = remember(route) {
-        (route as? RoutePlan.Route)?.let { samplePoints(it.points, ROUTE_DOT_SPACING) }.orEmpty()
+    // No dots once arrived: the rover stops just short of the marker, with nothing left to drive.
+    val arrived = motion.status == MotionStatus.ARRIVED
+    val routeDots = remember(route, arrived) {
+        if (arrived) emptyList()
+        else (route as? RoutePlan.Route)?.let { samplePoints(it.points, ROUTE_DOT_SPACING) }.orEmpty()
     }
     // Dots the rover already drove over are hidden; dot i sits (i + 1) spacings along the route.
     val hiddenDots = if (motion.isRunning) (motion.progress / ROUTE_DOT_SPACING).toInt() else 0
@@ -252,6 +258,23 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             }
             if (!motion.isRunning) break
         }
+    }
+
+    LaunchedEffect(motion.status) {
+        if (motion.status == MotionStatus.ARRIVED) dance = RoverDance()
+    }
+    LaunchedEffect(dance != null) {
+        if (dance == null) return@LaunchedEffect
+        var last = 0L
+        while (true) {
+            withFrameNanos { now ->
+                val seconds = if (last == 0L) 0f else ((now - last) / 1e9f).coerceAtMost(0.1f)
+                last = now
+                dance = dance?.step(seconds, currentTracking)
+            }
+            if (dance?.done != false) break
+        }
+        dance = null
     }
 
     LaunchedEffect(greeting != null) {
@@ -309,7 +332,10 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             is PlacementResult.Accepted -> {
                 setup = result.setup
                 // A new destination after arriving: wait for the player to start again.
-                if (motion.status == MotionStatus.ARRIVED) motion = motion.stop()
+                if (motion.status == MotionStatus.ARRIVED) {
+                    motion = motion.stop()
+                    dance = null
+                }
                 Log.i(TAG, "Placed $tapMode: destination=${setup.destination} obstacle=${setup.obstacle}")
             }
             is PlacementResult.Rejected -> rejection = result.reason
@@ -326,6 +352,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         tapMode = TapMode.DESTINATION
         motion = RoverMotion()
         greeting = null
+        dance = null
         routeStart = FloorPoint.ORIGIN
         // The map lives in the old anchor's frame.
         obstacleMap.clear()
@@ -541,8 +568,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                         val model = roverModel
                         // The rover turns to face where it will go: the route, or the destination.
                         Node(
-                            position = Position(x = roverPose.position.x, z = roverPose.position.z),
-                            rotation = Rotation(y = roverPose.heading),
+                            position = Position(x = roverPose.position.x, y = dance?.lift ?: 0f, z = roverPose.position.z),
+                            rotation = Rotation(y = roverPose.heading + (dance?.turn ?: 0f)),
                         ) {
                             if (model != null) {
                                 // Standing on the floor at the anchor origin, facing -Z.
