@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="520" viewBox="0 0 960 520" role="img" aria-label="Profundidade e mapa de ocupação">
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="#2878DB"/></marker></defs><style>
+text{font-family:Inter,Arial,Helvetica,sans-serif;fill:#17243B}
+.h{font-size:27px;font-weight:700}.sub{font-size:14px;fill:#63738A}
+.lab{font-size:15px;font-weight:600}.hint{font-size:13px;fill:#56657B}
+.tick{font-size:13px;font-weight:600}
+</style>
+<rect width="960" height="520" rx="16" fill="#F8FAFC"/>
+<text x="38" y="45" class="h">Profundidade e mapa de ocupação</text><text x="38" y="70" class="sub">A Depth API estima distâncias; o aplicativo converte pontos 3D em células do piso.</text>
+<path d="M38 89H922" stroke="#E1E8F1" stroke-width="1.5"/>
+<rect x="47" y="144" width="231" height="260" rx="14" fill="#FFFFFF" stroke="#D2DFEC" stroke-width="2"/>
+<rect x="68" y="161" rx="9" width="160" height="32" fill="#E8F1FD"/><text x="80" y="182" class="lab">Câmera + caixa</text>
+<path d="M74 234L250 234L253 370L71 370Z" fill="#E4EBF4"/>
+<path d="M73 282H252M73 327H252M113 235L97 370M194 235L219 370" stroke="#CBD5E4" stroke-width="1.4"/>
+<path d="M145 290l52 -14l37 17l-51 14z" fill="#C6D4E4" stroke="#93A7BE"/>
+<path d="M145 290v65l38 18v-66z" fill="#88A4BF"/><path d="M183 307l51 -14v62l-51 18z" fill="#A9BFD1"/>
+<rect x="109" y="375" rx="9" width="106" height="32" fill="#E8F1FD"/><text x="121" y="396" class="lab">Objeto real</text>
+<path d="M289 269H347" stroke="#2878DB" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="349" y="144" width="235" height="260" rx="14" fill="#FFFFFF" stroke="#D2DFEC" stroke-width="2"/>
+<rect x="369" y="161" rx="9" width="185" height="32" fill="#E8F1FD"/><text x="381" y="182" class="lab">Mapa de profundidade</text>
+<rect x="369" y="212" width="195" height="157" rx="6" fill="#D9EAF9"/>
+<path d="M369 212H564V266H369Z" fill="#508CCF"/>
+<path d="M369 266H564V314H369Z" fill="#58BCBC"/>
+<path d="M369 314H564V369H369Z" fill="#A1DAC9"/>
+<path d="M432 283l70 -12l25 18l-70 11z" fill="#346DAD"/>
+<path d="M432 283v51l25 13v-47z" fill="#347CB7"/><path d="M457 300l70 -11v49l-70 9z" fill="#4795C7"/>
+<text x="380" y="387" class="hint">Distância estimada por pixel</text>
+<path d="M593 269H630" stroke="#2878DB" stroke-width="3" marker-end="url(#arrow)"/>
+<rect x="631" y="144" width="282" height="260" rx="14" fill="#FFFFFF" stroke="#D2DFEC" stroke-width="2"/>
+<rect x="650" y="161" rx="9" width="239" height="32" fill="#E8F1FD"/><text x="662" y="182" class="lab">Grade de ocupação (5 cm)</text>
+<rect x="640" y="231" width="29" height="29" rx="2" fill="#CFD6E0"/><rect x="670" y="231" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="700" y="231" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="730" y="231" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="760" y="231" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="790" y="231" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="820" y="231" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="850" y="231" width="29" height="29" rx="2" fill="#CFD6E0"/><rect x="640" y="261" width="29" height="29" rx="2" fill="#CFD6E0"/><rect x="670" y="261" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="700" y="261" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="730" y="261" width="29" height="29" rx="2" fill="#E98993"/><rect x="760" y="261" width="29" height="29" rx="2" fill="#E98993"/><rect x="790" y="261" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="820" y="261" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="850" y="261" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="640" y="291" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="670" y="291" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="700" y="291" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="730" y="291" width="29" height="29" rx="2" fill="#E98993"/><rect x="760" y="291" width="29" height="29" rx="2" fill="#E98993"/><rect x="790" y="291" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="820" y="291" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="850" y="291" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="640" y="321" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="670" y="321" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="700" y="321" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="730" y="321" width="29" height="29" rx="2" fill="#E98993"/><rect x="760" y="321" width="29" height="29" rx="2" fill="#E98993"/><rect x="790" y="321" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="820" y="321" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="850" y="321" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="640" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="670" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="700" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="730" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="760" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="790" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="820" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/><rect x="850" y="351" width="29" height="29" rx="2" fill="#ADD7F7"/>
+<rect x="654" y="392" width="13" height="13" rx="2" fill="#ADD7F7"/><text x="671" y="403" class="hint">Livre</text>
+<rect x="731" y="392" width="13" height="13" rx="2" fill="#E98993"/><text x="748" y="403" class="hint">Ocupado</text>
+<rect x="836" y="392" width="13" height="13" rx="2" fill="#CFD6E0"/><text x="853" y="403" class="hint">Incerto</text>
+
+<path d="M38 454H922" stroke="#E1E8F1" stroke-width="1.5"/>
+<text x="38" y="482" style="font-size:16px;font-weight:600;fill:#23538B">As células não observadas permanecem desconhecidas; profundidade é estimativa.</text>
+</svg>

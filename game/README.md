@@ -1,6 +1,6 @@
-# RoverQuest MR — código do jogo
+# RoverQuest — código do jogo
 
-Projeto Android (Kotlin + Gradle) do RoverQuest MR. Visão geral do jogo no [README principal](../README.md).
+Projeto Android (Kotlin + Gradle) do RoverQuest. Visão geral do jogo no [README principal](../README.md).
 
 ## Requisitos
 
@@ -45,18 +45,21 @@ flowchart LR
         direction TB
         startup("startup")
         floor("floor")
+        depth("depth")
         nav("nav")
     end
     ARCore[("ARCore + SceneView")]
 
     App --> startup
     Ar --> floor
+    Ar --> depth
     Ar --> nav
     nav --> floor
+    nav --> depth
     Ar -.-> ARCore
 
     class Main,App,Ar android
-    class startup,floor,nav kotlin
+    class startup,floor,depth,nav kotlin
     class ARCore external
 
     %% Translucent fills and no fixed text color: GitHub picks the light or dark
@@ -79,13 +82,23 @@ Pacote `io.github.lianeheidemann.roverquest.core`, organizado por domínio:
 | --- | --- | --- |
 | `startup` | `StartupState.kt` | Decide o que mostrar antes da AR (verificando, AR não suportada, câmera negada, falha da sessão, pronto) |
 | | `DepthSupport.kt` | Classifica o suporte à profundidade (nenhum, automática, automática + Raw Depth) |
-| `floor` | `FloorSetup.kt` | Estado no piso: rover, destino e obstáculo manual, com validações (mesmo piso, distância, sobreposição) e o aviso ao jogador (`setupHint`) |
+| `floor` | `FloorSetup.kt` | Estado no piso: área confirmada, rover, destino e obstáculo manual, com validações (mesmo piso, distância, sobreposição), o aviso ao jogador (`setupHint`) e a direção do rover (`headingDegrees`) |
+| `depth` | `DepthFrame.kt` | Imagem de profundidade (mm) e confiança, já copiadas do ARCore |
+| | `DepthReport.kt` | Diagnóstico da leitura: distância no centro, confiança, cobertura e motivo da incerteza |
+| | `DepthColors.kt` | Pinta a profundidade (vermelho perto, azul longe) para a sobreposição de diagnóstico |
+| | `DepthProjection.kt` | Converte pixels de profundidade em pontos no frame da âncora do piso (`projectToFloor`) |
+| | `FloorLevel.kt` | Ajusta um plano ao chão visto e mede as alturas a partir dele, não da âncora |
 | `nav` | `OccupancyGrid.kt` | Grade de células de 5 cm em 5 × 5 m centrada no rover: livre, ocupada ou desconhecida |
+| | `ObstacleMap.kt` | Mapa de obstáculos da profundidade: votos por célula (obstáculo 5–40 cm, chão ±3 cm) com histerese |
 | | `AStar.kt` | A* com 8 vizinhos, sem cortar quinas, com o motivo quando não há rota |
-| | `RoutePlanner.kt` | Monta a grade a partir do `FloorSetup`, roda o A*, simplifica a rota e gera os pontos para desenhar |
+| | `RoutePlanner.kt` | Monta a grade (mapa + folga do rover + obstáculo manual), roda o A*, leva o destino colado em móvel ao chão livre mais próximo e gera os pontos para desenhar |
+| | `GridColors.kt` | Cores de cada célula para a sobreposição do mapa |
+| | `RoverMotion.kt` | Movimento do rover pela rota: gira, anda, pausa sem rastreamento, replaneja e para a 22 cm da bandeira |
+| | `RoverGreeting.kt` | Saudação ao colocar o rover: meia-volta, vem até o jogador, cumprimenta e volta |
+| | `RoverDance.kt` | Dancinha de vitória: vira para o jogador, balança, gira e dá dois pulinhos |
 
 Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos imutáveis
-(`FloorSetup`, `RoutePlan`). Tudo é testável sem câmera, com os testes em `core/src/test/`.
+(`FloorSetup`, `RoutePlan`, `RoverMotion`). Animações são funções do tempo. Tudo é testável sem câmera, com os testes em `core/src/test/`.
 
 ### `:app` — Android
 
@@ -93,9 +106,11 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 | --- | --- |
 | `MainActivity.kt` | Ponto de entrada; só abre a interface |
 | `ui/RoverQuestApp.kt` | Pede a permissão da câmera, verifica o ARCore e escolhe a tela via `resolveStartupState` (`:core`) |
-| `ui/ArScreen.kt` | Sessão AR (SceneView): converte o toque no piso para coordenadas da âncora, chama o `FloorSetup` e desenha rover, destino, obstáculo e rota como filhos da âncora; painéis de status e instruções |
-| `assets/models/` | Modelos 3D do rover (`rover.glb`, `rover-mini.glb`), ainda não usados no código |
-| `res/` | Ícone e textos |
+| `ui/ArScreen.kt` | Sessão AR (SceneView): converte o toque no piso para coordenadas da âncora, chama o `FloorSetup`, lê a profundidade a 10 Hz para o mapa, avança o rover e as animações a cada quadro e desenha rover, bandeira, obstáculo e rota como filhos da âncora; barra de status (profundidade, mapa, lanterna, ⋮ Resetar jogo) e painel de instruções |
+| `ui/DepthDiagnostics.kt` | Lê a imagem de profundidade do ARCore, mostra a sobreposição colorida e o painel de diagnóstico (gravar e repetir sessão) |
+| `ui/MapOverlay.kt` | Desenha a grade do mapa de obstáculos sobre o piso |
+| `assets/models/` | Modelos 3D. O rover usa `rover-mini-lite.glb` (58 mil vértices, texturas de 1024 px), gerado a partir de `rover-mini.glb`; `rover.glb` e `rover-mini.glb` são os originais, guardados para a futura troca de rover. A bandeira de chegada usa `destination-flag-lite.glb` (68 mil vértices, texturas de 1024 px), gerado a partir do original `destination-flag.glb` |
+| `res/` | Ícones (Material, Apache 2.0), tema escuro, tela de abertura e textos |
 
 ### Fluxo de um toque
 
@@ -142,7 +157,61 @@ flowchart TD
 
 - Posições do jogo são relativas à **âncora do piso**, criada onde o rover é colocado; por isso tudo fica preso ao chão quando o celular se move.
 - A interface só exibe estado e envia ações; regras ficam no `:core`.
-- Profundidade: a leitura entra no `:app` (Parte 4) e a conversão em células da grade no `:core` (Parte 5), conforme o [plano](../docs/step-by-step.md).
+- Profundidade: o `:app` só copia a imagem do ARCore; projeção, nivelamento do chão e mapa ficam no `:core` (Partes 4 e 5 do [plano](../docs/step-by-step.md)).
+- Se a profundidade não existir, o jogo avisa e só o obstáculo manual bloqueia.
+
+### Fluxo da profundidade
+
+```mermaid
+---
+config:
+  flowchart:
+    curve: basis
+    nodeSpacing: 40
+    rankSpacing: 50
+    padding: 16
+---
+flowchart TD
+    D(["📷 Imagem de profundidade · ARCore"])
+    subgraph app [":app · Android"]
+        R("readDepthFrame<br/>copia mm e confiança")
+    end
+    subgraph core [":core · Kotlin puro"]
+        P("projectToFloor<br/>pontos na âncora do piso")
+        L("FloorLevel<br/>altura acima do chão visto")
+        M("ObstacleMap<br/>votos com histerese")
+        G("planRoute<br/>grade + A*")
+    end
+    V("ArScreen<br/>rota, mapa e rover")
+
+    D --> R --> P --> L --> M --> G --> V
+
+    class D start
+    class R,V android
+    class P,L,M,G kotlin
+
+    %% Translucent fills and no fixed text color: GitHub picks the light or dark
+    %% Mermaid theme from the viewer's setting, and these colors work on both.
+    classDef android fill:#3DDC8433,stroke:#3DDC84,stroke-width:2px
+    classDef kotlin fill:#7F52FF33,stroke:#7F52FF,stroke-width:2px
+    classDef start fill:#F5A62340,stroke:#F5A623,stroke-width:2px
+    style app fill:#3DDC8414,stroke:#3DDC84,stroke-width:1px
+    style core fill:#7F52FF14,stroke:#7F52FF,stroke-width:1px
+```
+
+### Modelos 3D otimizados
+
+Modelos gerados por IA costumam ser pesados demais para rodar junto com a câmera e a profundidade.
+O `rover-mini-lite.glb` e o `destination-flag-lite.glb` foram gerados assim (fora do projeto, sem
+dependência no build):
+
+```bash
+npx gltfpack@1.3.0 -i rover-mini.glb -o rover-mini-lite.glb -si 0.05 -cc -noq
+npx gltfpack@1.3.0 -i destination-flag.glb -o destination-flag-lite.glb -si 0.06 -cc -noq
+```
+
+Depois, as texturas foram reduzidas de 4096 para 1024 px. `-noq` mantém as posições em float: com
+posições quantizadas, o SceneView calcula a escala do modelo de forma errada.
 
 ## Comandos
 
@@ -161,4 +230,4 @@ APKs prontos para instalar ficam em [Releases](https://github.com/lianeheidemann
 
 Para testar outra branch (ex.: `develop`) sem merge: **Actions → APK de teste → Run workflow**, escolha a branch. O APK aparece em Releases como `<branch> (teste)`, substituído a cada build.
 
-APK de teste mais recente da `develop` (link fixo): [RoverQuestMR-develop.apk](https://github.com/lianeheidemann/rover-quest-mr/releases/download/test-develop/RoverQuestMR-develop.apk). Para outra branch, troque `develop` pelo nome dela (com `/` trocado por `-`) nas duas partes do link.
+APK de teste mais recente da `develop` (link fixo): [RoverQuest-develop.apk](https://github.com/lianeheidemann/rover-quest-mr/releases/download/test-develop/RoverQuest-develop.apk). Para outra branch, troque `develop` pelo nome dela (com `/` trocado por `-`) nas duas partes do link.

@@ -3,14 +3,16 @@ package io.github.lianeheidemann.roverquest.core.floor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertTrue
 
 class FloorSetupTest {
 
-    private val withRover = FloorSetup().withRover()
+    private val withRover = FloorSetup().confirmArea().withRover()
 
     @Test
     fun `phases follow rover then destination`() {
-        assertEquals(SetupPhase.PLACE_ROVER, FloorSetup().phase)
+        assertEquals(SetupPhase.CONFIRM_AREA, FloorSetup().phase)
+        assertEquals(SetupPhase.PLACE_ROVER, FloorSetup().confirmArea().phase)
         assertEquals(SetupPhase.PLACE_DESTINATION, withRover.phase)
 
         val result = withRover.placeDestination(1f, 0f, -0.5f)
@@ -63,7 +65,7 @@ class FloorSetupTest {
     @Test
     fun `reset clears rover and destination`() {
         val ready = (withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted).setup
-        assertEquals(FloorSetup(), ready.reset())
+        assertEquals(FloorSetup(areaConfirmed = true), ready.reset())
         assertEquals(SetupPhase.PLACE_ROVER, ready.reset().phase)
     }
 
@@ -131,8 +133,38 @@ class FloorSetupTest {
         )
     }
 
+    @Test
+    fun `the rover can only be placed after confirming the area`() {
+        assertEquals(FloorSetup(), FloorSetup().withRover())
+        assertTrue(FloorSetup().confirmArea().withRover().roverPlaced)
+    }
+
+    @Test
+    fun `restarting keeps the confirmed area`() {
+        val ready = (withRover.placeDestination(1f, 0f, 0f) as PlacementResult.Accepted).setup
+        assertTrue(ready.reset().areaConfirmed)
+        assertEquals(SetupPhase.PLACE_ROVER, ready.reset().phase)
+    }
+
+    @Test
+    fun `a detected floor asks for confirmation before anything else`() {
+        val unconfirmed = FloorSetup()
+        assertEquals(
+            SetupHint.SCAN_FLOOR,
+            setupHint(unconfirmed, cameraTracking = true, anchorStopped = false, floorDetected = false, aimingAtFloor = false),
+        )
+        assertEquals(
+            SetupHint.CONFIRM_AREA,
+            setupHint(unconfirmed, cameraTracking = true, anchorStopped = false, floorDetected = true, aimingAtFloor = false),
+        )
+        assertEquals(
+            SetupHint.TRACKING_LOST,
+            setupHint(unconfirmed, cameraTracking = false, anchorStopped = false, floorDetected = true, aimingAtFloor = true),
+        )
+    }
+
     private fun hint(
-        setup: FloorSetup = FloorSetup(),
+        setup: FloorSetup = FloorSetup().confirmArea(),
         cameraTracking: Boolean = true,
         anchorStopped: Boolean = false,
         floorDetected: Boolean = true,

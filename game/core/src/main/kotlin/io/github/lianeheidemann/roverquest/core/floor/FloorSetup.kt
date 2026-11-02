@@ -12,7 +12,8 @@ data class FloorPoint(val x: Float, val z: Float) {
     }
 }
 
-enum class SetupPhase { PLACE_ROVER, PLACE_DESTINATION, READY }
+/** Game setup steps, in order. The player first accepts the detected floor area. */
+enum class SetupPhase { CONFIRM_AREA, PLACE_ROVER, PLACE_DESTINATION, READY }
 
 enum class PlacementRejection {
     NO_ROVER,
@@ -31,33 +32,42 @@ sealed interface PlacementResult {
 
 /**
  * Rover, destination and manual obstacle placed on the floor. The rover defines the floor anchor,
- * so it is always at [FloorPoint.ORIGIN]; everything else is stored relative to it.
+ * so it starts at [FloorPoint.ORIGIN]; everything else is stored relative to it. Once it drives,
+ * placement checks use its current position (`rover`).
+ *
+ * @param areaConfirmed the player accepted the detected floor area; nothing can be placed before.
  */
 data class FloorSetup(
+    val areaConfirmed: Boolean = false,
     val roverPlaced: Boolean = false,
     val destination: FloorPoint? = null,
     val obstacle: FloorPoint? = null,
 ) {
     val phase: SetupPhase
         get() = when {
+            !areaConfirmed -> SetupPhase.CONFIRM_AREA
             !roverPlaced -> SetupPhase.PLACE_ROVER
             destination == null -> SetupPhase.PLACE_DESTINATION
             else -> SetupPhase.READY
         }
 
-    fun withRover(): FloorSetup = FloorSetup(roverPlaced = true)
+    fun confirmArea(): FloorSetup = copy(areaConfirmed = true)
 
-    fun reset(): FloorSetup = FloorSetup()
+    /** Places the rover; ignored until the area is confirmed. */
+    fun withRover(): FloorSetup = if (areaConfirmed) FloorSetup(areaConfirmed = true, roverPlaced = true) else this
+
+    /** Clears rover, destination and obstacle, keeping the confirmed area ("Recomeçar"). */
+    fun reset(): FloorSetup = FloorSetup(areaConfirmed = areaConfirmed)
 
     /**
      * Places (or moves) the destination at the given offset from the floor anchor, in meters,
      * with `dy` pointing up from the floor.
      */
-    fun placeDestination(dx: Float, dy: Float, dz: Float): PlacementResult {
+    fun placeDestination(dx: Float, dy: Float, dz: Float, rover: FloorPoint = FloorPoint.ORIGIN): PlacementResult {
         floorPointOrRejection(dx, dy, dz)?.let { return PlacementResult.Rejected(it) }
         val point = FloorPoint(dx, dz)
         return when {
-            point.distanceTo(FloorPoint.ORIGIN) < MIN_DESTINATION_DISTANCE ->
+            point.distanceTo(rover) < MIN_DESTINATION_DISTANCE ->
                 PlacementResult.Rejected(PlacementRejection.TOO_CLOSE)
             obstacle?.let { obstacleBlocks(it, point) } == true ->
                 PlacementResult.Rejected(PlacementRejection.BLOCKED_BY_OBSTACLE)
@@ -66,11 +76,11 @@ data class FloorSetup(
     }
 
     /** Places (or moves) the manual test obstacle; same coordinates as [placeDestination]. */
-    fun placeObstacle(dx: Float, dy: Float, dz: Float): PlacementResult {
+    fun placeObstacle(dx: Float, dy: Float, dz: Float, rover: FloorPoint = FloorPoint.ORIGIN): PlacementResult {
         floorPointOrRejection(dx, dy, dz)?.let { return PlacementResult.Rejected(it) }
         val point = FloorPoint(dx, dz)
         return when {
-            obstacleBlocks(point, FloorPoint.ORIGIN) ->
+            obstacleBlocks(point, rover) ->
                 PlacementResult.Rejected(PlacementRejection.COVERS_ROVER)
             destination?.let { obstacleBlocks(point, it) } == true ->
                 PlacementResult.Rejected(PlacementRejection.COVERS_DESTINATION)
@@ -92,7 +102,7 @@ data class FloorSetup(
         const val MAX_FLOOR_HEIGHT_DIFFERENCE = 0.10f
 
         /** The destination must be clearly apart from the rover. */
-        const val MIN_DESTINATION_DISTANCE = 0.20f
+        const val MIN_DESTINATION_DISTANCE = 0.30f
 
         /** Half the side of the square play area centered on the rover. */
         const val PLAY_AREA_HALF_SIZE = 2.5f
@@ -121,11 +131,16 @@ enum class SetupHint {
     TRACKING_LOST,
     ANCHOR_LOST,
     SCAN_FLOOR,
+    CONFIRM_AREA,
     AIM_AT_FLOOR,
     TAP_TO_PLACE_ROVER,
+    GREETING,
     TAP_TO_PLACE_DESTINATION,
+    NEEDS_SCAN,
     NO_ROUTE,
     READY,
+    DRIVING,
+    ARRIVED,
 }
 
 /**
@@ -136,6 +151,10 @@ enum class SetupHint {
  * @param floorDetected at least one floor surface has been found.
  * @param aimingAtFloor the placement reticle currently hits a floor surface.
  * @param routeBlocked rover and destination are placed but no route connects them.
+ * @param routeNeedsScan a route may exist, but part of the way was never observed.
+ * @param driving the rover is moving along the route.
+ * @param arrived the rover reached the destination.
+ * @param greeting the rover is greeting the player, just after being placed.
  */
 fun setupHint(
     setup: FloorSetup,
@@ -144,12 +163,44 @@ fun setupHint(
     floorDetected: Boolean,
     aimingAtFloor: Boolean,
     routeBlocked: Boolean = false,
+    routeNeedsScan: Boolean = false,
+    driving: Boolean = false,
+    arrived: Boolean = false,
+    greeting: Boolean = false,
 ): SetupHint = when {
     setup.roverPlaced && anchorStopped -> SetupHint.ANCHOR_LOST
     !cameraTracking -> SetupHint.TRACKING_LOST
-    setup.phase == SetupPhase.READY -> if (routeBlocked) SetupHint.NO_ROUTE else SetupHint.READY
+    greeting -> SetupHint.GREETING
+    setup.phase == SetupPhase.READY -> when {
+        arrived -> SetupHint.ARRIVED
+        routeBlocked -> SetupHint.NO_ROUTE
+        routeNeedsScan -> SetupHint.NEEDS_SCAN
+        driving -> SetupHint.DRIVING
+        else -> SetupHint.READY
+    }
     !floorDetected -> SetupHint.SCAN_FLOOR
+    setup.phase == SetupPhase.CONFIRM_AREA -> SetupHint.CONFIRM_AREA
     !aimingAtFloor -> SetupHint.AIM_AT_FLOOR
     setup.phase == SetupPhase.PLACE_ROVER -> SetupHint.TAP_TO_PLACE_ROVER
     else -> SetupHint.TAP_TO_PLACE_DESTINATION
+}
+
+/**
+ * Turn around the vertical axis, in degrees, that points the rover's front (-Z) from [from]
+ * towards [to]. `0` keeps the front at -Z; positive values turn counter-clockwise seen from above.
+ */
+fun headingDegrees(from: FloorPoint, to: FloorPoint): Float {
+    val dx = to.x - from.x
+    val dz = to.z - from.z
+    if (dx == 0f && dz == 0f) return 0f
+    return Math.toDegrees(kotlin.math.atan2(-dx, -dz).toDouble()).toFloat()
+}
+
+/**
+ * Where the rover standing at [from] should face: the first turn of the route, else the
+ * destination, else ahead.
+ */
+fun roverHeading(setup: FloorSetup, routePoints: List<FloorPoint>?, from: FloorPoint = FloorPoint.ORIGIN): Float {
+    val target = routePoints?.getOrNull(1) ?: setup.destination ?: return 0f
+    return headingDegrees(from, target)
 }

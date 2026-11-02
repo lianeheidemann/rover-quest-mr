@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -81,7 +82,8 @@ fun RoverQuestApp() {
 
 @Composable
 private fun Message(text: String, actionLabel: String? = null, onAction: () -> Unit = {}) {
-    Surface(modifier = Modifier.fillMaxSize()) {
+    // Dark like the camera screen that follows, so the app does not flash white on start.
+    Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFF121212), contentColor = Color.White) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.padding(32.dp)) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
