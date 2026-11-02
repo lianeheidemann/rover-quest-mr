@@ -1,6 +1,6 @@
 # RoverQuest — Guia de implementação passo a passo
 
-> **Status:** Partes 1 a 4 validadas no celular de teste; Partes 5 e 6 implementadas e parcialmente validadas (falta o teste com caixa real).  
+> **Status:** Partes 1 a 5 validadas no celular de teste; **MVP validado** (o rover contornou uma caixa real e chegou ao destino). Falta validar a pausa da Parte 6.  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra (o "celular de teste" deste guia).  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -82,9 +82,9 @@
 
 **Concluído quando:** o app mostra a profundidade estimada de piso, caixa e parede.
 
-### Parte 5 — Mapa de obstáculos
+### Parte 5 — Mapa de obstáculos ✅
 
-- [ ] Converter profundidade em células ocupadas e livres, de forma estável.
+- [x] Converter profundidade em células ocupadas e livres, de forma estável.
 - [x] Considerar o tamanho do rover ao marcar obstáculos.
 - [x] Célula não observada continua desconhecida, nunca livre.
 - [x] Sobreposição visual da grade para depuração.
@@ -108,7 +108,9 @@
 **No celular de teste**
 - ✅ Com o ajuste do chão, o piso livre fica verde também longe do rover; sofá e cadeira ficam vermelhos.
 - ⚠️ Pequenos furos sem cor no meio do verde às vezes atrasam a rota ("Aponte a câmera para o caminho").
-- ⏳ Falta: uma caixa real aparecer bloqueada de forma estável e a rota desviar dela.
+- ✅ Caixa de leite real (~7 cm de largura), sem obstáculo virtual: apareceu vermelha com folga laranja, o chão em volta
+  verde, e a rota desviou dela.
+- ⚠️ Num momento o chão inteiro ficou vermelho antes de se corrigir (provável reflexo do piso liso).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
@@ -116,7 +118,7 @@
 
 - [x] Rover segue a rota com movimento suave.
 - [ ] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
-- [ ] Replaneja quando o mapa muda de forma estável.
+- [x] Replaneja quando o mapa muda de forma estável.
 
 **Como funciona** (`core/nav/RoverMotion.kt`)
 - Botão "Ir" inicia o trajeto; "Parar" interrompe. O rover anda a 15 cm/s, gira no lugar quando precisa
@@ -128,7 +130,9 @@
 
 **No celular de teste**
 - ✅ O rover seguiu a rota contornando o obstáculo virtual e chegou ao destino.
-- ⏳ Falta: pausa ao perder o rastreamento, replanejamento e o trajeto contornando uma caixa real.
+- ✅ **MVP alcançado:** o rover contornou uma caixa real (detectada só pela profundidade) e chegou à bandeira.
+- ✅ A rota se refez sozinha conforme o mapa mudou.
+- ⏳ Falta: pausa ao perder o rastreamento.
 
 **Concluído quando:** o rover chega ao destino contornando a caixa real. **(MVP)**
 
@@ -164,8 +168,8 @@ Fora do plano original; animações puras em `:core`, sem efeito nas regras.
 | --- | --- | --- |
 | M1 — Base Android/AR | 1–2 | Rover e destino sobre piso real |
 | M2 — Navegação | 3 | A* e obstáculo manual com testes |
-| M3 — Visão espacial | 4–5 | Mapa de obstáculos estimado por profundidade |
-| **M4 — MVP** | **6** | **Rover desvia de caixa real** |
+| M3 — Visão espacial ✅ | 4–5 | Mapa de obstáculos estimado por profundidade |
+| **M4 — MVP ✅** | **6** | **Rover desvia de caixa real** |
 | M5 — Jogo completo | 7–8 | Mecânica de jogo, validação e documentação |
 
 ## 4. Estrutura
@@ -184,4 +188,4 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 
 Ver [references.md](references.md).
 
-> **Próxima ação:** testar no celular uma caixa real entre o rover e a bandeira (valida as Partes 5 e 6, o MVP) e a pausa ao perder o rastreamento. Não implementar todas as partes ao mesmo tempo.
+> **Próxima ação:** validar a pausa ao perder o rastreamento (Parte 6) e definir a mecânica principal da Parte 7. Não implementar todas as partes ao mesmo tempo.
