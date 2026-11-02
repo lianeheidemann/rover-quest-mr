@@ -5,7 +5,7 @@ Projeto Android (Kotlin + Gradle) do RoverQuest. Visão geral do jogo no [README
 ## Requisitos
 
 - JDK 17 ou superior
-- Android SDK com a plataforma definida em `compileSdk` (`app/build.gradle.kts`), com `ANDROID_HOME` configurado ou `local.properties` apontando para o SDK
+- Android SDK com a plataforma definida em `compileSdk` (`app/build.gradle.kts`), com `ANDROID_HOME` configurado ou `local.properties` apontando para o SDK. Sem Android Studio, dá para instalar só o necessário com o [command-line tools](https://developer.android.com/tools/sdkmanager): `sdkmanager "platforms;android-37.2" "build-tools;37.0.0" "platform-tools"`
 - Celular Android compatível com ARCore (testado no Galaxy S23 Ultra); o emulador não é suportado
 
 ## Estrutura
@@ -15,7 +15,20 @@ game/
 ├── settings.gradle.kts        inclui :app e :core
 ├── gradle/libs.versions.toml  versões fixas de todas as dependências
 ├── app/   (:app)  Android — câmera, AR, interface
+│   └── src/main/
+│       ├── kotlin/.../roverquest/
+│       │   ├── MainActivity.kt
+│       │   └── ui/
+│       │       ├── RoverQuestApp.kt, Labels.kt
+│       │       ├── ar/          tela AR: estado da partida, profundidade, gravação, cena 3D
+│       │       ├── panels/      barra de status, painel de instruções, diagnóstico
+│       │       └── components/  botões reutilizados
+│       ├── assets/models/       modelos 3D (.glb)
+│       └── res/                 ícones, tema, textos
 └── core/  (:core) Kotlin puro — regras do jogo + testes JUnit
+    └── src/
+        ├── main/kotlin/.../core/  startup/, floor/, depth/, nav/
+        └── test/kotlin/.../core/  testes por pacote
 ```
 
 | Módulo | Conteúdo |
@@ -39,7 +52,11 @@ config:
 flowchart LR
     subgraph app [":app · Android"]
         direction TB
-        Main("MainActivity") --> App("RoverQuestApp") --> Ar("ArScreen")
+        Main("MainActivity") --> App("RoverQuestApp") --> Ar("ar/ArScreen")
+        Ar --> Game("ar/GameState")
+        Ar --> Depth("ar/DepthMapper")
+        Ar --> Scene("ar/ArSceneContent")
+        Ar --> Panels("panels/*")
     end
     subgraph core [":core · Kotlin puro"]
         direction TB
@@ -51,14 +68,17 @@ flowchart LR
     ARCore[("ARCore + SceneView")]
 
     App --> startup
-    Ar --> floor
-    Ar --> depth
+    Game --> floor
+    Game --> nav
+    Depth --> depth
+    Depth --> nav
     Ar --> nav
     nav --> floor
     nav --> depth
     Ar -.-> ARCore
+    Scene -.-> ARCore
 
-    class Main,App,Ar android
+    class Main,App,Ar,Game,Depth,Scene,Panels android
     class startup,floor,depth,nav kotlin
     class ARCore external
 
@@ -227,10 +247,11 @@ posições quantizadas, o SceneView calcula a escala do modelo de forma errada.
 Execute dentro desta pasta:
 
 ```bash
-./gradlew :core:test           # testes da lógica
-./gradlew :app:assembleDebug   # gera o APK de debug
-./gradlew :app:installDebug    # instala no celular conectado via adb
-adb logcat -s RoverQuest       # logs do app
+./gradlew :core:test                # testes da lógica
+./gradlew :app:compileDebugKotlin   # só confere se o app compila (rápido)
+./gradlew :app:assembleDebug        # gera o APK de debug
+./gradlew :app:installDebug         # instala no celular conectado via adb
+adb logcat -s RoverQuest            # logs do app
 ```
 
 O APK gerado fica em `app/build/outputs/apk/debug/app-debug.apk`.
