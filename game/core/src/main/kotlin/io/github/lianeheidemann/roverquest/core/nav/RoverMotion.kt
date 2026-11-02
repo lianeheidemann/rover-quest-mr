@@ -21,7 +21,7 @@ const val WAYPOINT_REACHED = 0.02f
  * The rover stops this far, in meters, from the destination's center: just short of the
  * marker instead of on top of it. Smaller than the closest a destination can be placed.
  */
-const val ARRIVAL_DISTANCE = 0.15f
+const val ARRIVAL_DISTANCE = 0.18f
 
 /** Where the rover is on the floor (anchor frame) and where its front (-Z) points, in degrees. */
 data class RoverPose(val position: FloorPoint = FloorPoint.ORIGIN, val heading: Float = 0f)

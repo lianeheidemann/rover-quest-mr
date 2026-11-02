@@ -117,7 +117,7 @@
     (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
     mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
-    O rover para 15 cm antes do centro do destino, sem subir no marcador, e faz uma dancinha de
+    O rover para 18 cm antes do centro do destino (bandeira 3D), sem subir no marcador, e faz uma dancinha de
     vitória: balança, gira uma volta e dá dois pulinhos (`core/nav/RoverDance.kt`, não testado no
     S23 Ultra).
   - **Extra (pedido da autora), não testado no S23 Ultra:** ao colocar o rover pela primeira vez na

@@ -120,6 +120,12 @@ private const val ROVER_MODEL_SIZE = 0.2f
 /** Turn around the vertical axis so the model's front (its +X side, seen on the phone) faces -Z. */
 private const val ROVER_MODEL_YAW = 90f
 
+/** Destination flag; generated from `destination-flag.glb` (see game/README.md). */
+private const val DESTINATION_MODEL_ASSET = "models/destination-flag-lite.glb"
+
+/** Height of the destination flag, in meters. */
+private const val DESTINATION_MODEL_SIZE = 0.3f
+
 /** What a tap does once the rover is on the floor. */
 private enum class TapMode { DESTINATION, OBSTACLE }
 
@@ -547,6 +553,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 // invisible. A new one is loaded as soon as the old rover leaves, before the next tap,
                 // so the stand-in box is not seen in a normal game.
                 val roverModel = key(roverModelGeneration) { rememberModelInstance(modelLoader, ROVER_MODEL_ASSET) }
+                // Same for the flag, which leaves with the rover (Recomeçar).
+                val destinationModel = key(roverModelGeneration) { rememberModelInstance(modelLoader, DESTINATION_MODEL_ASSET) }
                 val reticleMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color.White.copy(alpha = 0.8f))
                 }
@@ -626,6 +634,17 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                             }
                         }
                         setup.destination?.let { destination ->
+                            val flag = destinationModel
+                            if (flag != null) {
+                                // Standing on the floor at the destination.
+                                ModelNode(
+                                    modelInstance = flag,
+                                    scaleToUnits = DESTINATION_MODEL_SIZE,
+                                    centerOrigin = Position(0f, -1f, 0f),
+                                    position = Position(x = destination.x, z = destination.z),
+                                )
+                            } else {
+                            // Simple marker while the model loads (or if it fails).
                             CylinderNode(
                                 radius = 0.08f,
                                 height = 0.004f,
@@ -638,6 +657,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                                 position = Position(x = destination.x, y = 0.125f, z = destination.z),
                                 materialInstance = destinationMark,
                             )
+                            }
                         }
                     }
                 }

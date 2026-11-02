@@ -96,7 +96,7 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 | `MainActivity.kt` | Ponto de entrada; só abre a interface |
 | `ui/RoverQuestApp.kt` | Pede a permissão da câmera, verifica o ARCore e escolhe a tela via `resolveStartupState` (`:core`) |
 | `ui/ArScreen.kt` | Sessão AR (SceneView): converte o toque no piso para coordenadas da âncora, chama o `FloorSetup` e desenha rover, destino, obstáculo e rota como filhos da âncora; painéis de status e instruções |
-| `assets/models/` | Modelos 3D do rover. O jogo usa `rover-mini-lite.glb` (58 mil vértices, texturas de 1024 px), gerado a partir de `rover-mini.glb`; `rover.glb` e `rover-mini.glb` são os originais, guardados para a futura troca de rover |
+| `assets/models/` | Modelos 3D. O rover usa `rover-mini-lite.glb` (58 mil vértices, texturas de 1024 px), gerado a partir de `rover-mini.glb`; `rover.glb` e `rover-mini.glb` são os originais, guardados para a futura troca de rover. A bandeira de chegada usa `destination-flag-lite.glb` (68 mil vértices, texturas de 1024 px), gerado a partir do original `destination-flag.glb` |
 | `res/` | Ícone e textos |
 
 ### Fluxo de um toque
@@ -153,6 +153,7 @@ O `rover-mini-lite.glb` foi gerado assim (fora do projeto, sem dependência no b
 
 ```bash
 npx gltfpack@1.3.0 -i rover-mini.glb -o rover-mini-lite.glb -si 0.05 -cc -noq
+npx gltfpack@1.3.0 -i destination-flag.glb -o destination-flag-lite.glb -si 0.06 -cc -noq
 ```
 
 Depois, as texturas foram reduzidas de 4096 para 1024 px. `-noq` mantém as posições em float: com
