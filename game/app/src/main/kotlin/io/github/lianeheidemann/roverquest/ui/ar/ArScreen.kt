@@ -215,7 +215,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 },
                 onGestureListener = rememberOnGestureListener(
                     onSingleTapConfirmed = { _, _ ->
-                        game.onTap(reticleHit, cameraTracking = trackingState == TrackingState.TRACKING)
+                        game.onTap(reticleHit, cameraTracking = trackingState == TrackingState.TRACKING, map = depth.obstacleMap.takeIf { depth.mapping })
                     },
                 ),
             ) {

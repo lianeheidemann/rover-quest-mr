@@ -56,4 +56,6 @@ internal fun rejectionLabel(reason: PlacementRejection): String = when (reason) 
     PlacementRejection.BLOCKED_BY_OBSTACLE -> "O destino não pode ficar no obstáculo."
     PlacementRejection.COVERS_ROVER -> "O obstáculo não pode cobrir o rover."
     PlacementRejection.COVERS_DESTINATION -> "O obstáculo não pode cobrir o destino."
+    PlacementRejection.ON_SEEN_OBSTACLE -> "Lugar ocupado: escolha o chão livre."
+    PlacementRejection.NOT_SEEN -> "Chão ainda não visto: passe a câmera por lá antes."
 }

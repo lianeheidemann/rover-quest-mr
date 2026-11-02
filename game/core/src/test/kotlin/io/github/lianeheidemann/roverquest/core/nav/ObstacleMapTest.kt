@@ -3,6 +3,7 @@ package io.github.lianeheidemann.roverquest.core.nav
 import io.github.lianeheidemann.roverquest.core.depth.FloorSample
 import io.github.lianeheidemann.roverquest.core.floor.FloorPoint
 import io.github.lianeheidemann.roverquest.core.floor.FloorSetup
+import io.github.lianeheidemann.roverquest.core.floor.PlacementRejection
 import io.github.lianeheidemann.roverquest.core.floor.PlacementResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -74,6 +75,19 @@ class ObstacleMapTest {
         // Box side and top: most points high, some floor at the cell's edge.
         repeat(3) { map.integrate(points(0.9f, 0f, 0.15f, count = 12) + points(0.9f, 0f, 0f, count = 10)) }
         assertEquals(CellState.OCCUPIED, map.state(0.9f, 0f))
+    }
+
+    @Test
+    fun `the destination must be on seen floor and not on a seen obstacle`() {
+        val map = newObstacleMap()
+        repeat(3) {
+            map.integrate(points(0.5f, 0f, 0.005f) + points(0.6f, 0f, 0.005f) + points(1f, 0f, 0.15f))
+        }
+        assertEquals(null, destinationRejection(map, FloorPoint(0.5f, 0f)))
+        // A small hole next to seen free floor is fine.
+        assertEquals(null, destinationRejection(map, FloorPoint(0.55f, 0.05f)))
+        assertEquals(PlacementRejection.ON_SEEN_OBSTACLE, destinationRejection(map, FloorPoint(1f, 0f)))
+        assertEquals(PlacementRejection.NOT_SEEN, destinationRejection(map, FloorPoint(-1f, -1f)))
     }
 
     @Test

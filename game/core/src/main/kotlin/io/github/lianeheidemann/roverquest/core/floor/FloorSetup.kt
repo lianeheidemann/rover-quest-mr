@@ -23,6 +23,12 @@ enum class PlacementRejection {
     BLOCKED_BY_OBSTACLE,
     COVERS_ROVER,
     COVERS_DESTINATION,
+
+    /** Depth sees an obstacle right there (a red cell on the map). */
+    ON_SEEN_OBSTACLE,
+
+    /** That floor was never seen by depth, so nobody knows what is there. */
+    NOT_SEEN,
 }
 
 sealed interface PlacementResult {

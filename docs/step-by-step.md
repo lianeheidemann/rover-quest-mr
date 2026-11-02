@@ -124,6 +124,10 @@
   **Corrigido, aguardando validação:** busca e limite de ±15 cm, escolhendo o pico de altura forte
   mais perto da âncora; o primeiro ajuste vale inteiro e o mapa só vota depois de 3 ajustes
   (`FloorLevel.settled`).
+- ✅ Com as correções, o piso liso ficou quase todo verde e a rota apareceu ("Rota pronta").
+- A bandeira não pode mais ser colocada em cima de obstáculo visto (vermelho) nem em chão nunca visto
+  (sem cor); furinhos no meio do verde e a folga laranja continuam aceitos
+  (`destinationRejection` em `core/nav/RoutePlanner.kt`).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 

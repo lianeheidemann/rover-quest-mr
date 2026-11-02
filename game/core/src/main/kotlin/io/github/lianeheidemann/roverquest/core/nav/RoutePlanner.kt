@@ -2,6 +2,7 @@ package io.github.lianeheidemann.roverquest.core.nav
 
 import io.github.lianeheidemann.roverquest.core.floor.FloorPoint
 import io.github.lianeheidemann.roverquest.core.floor.FloorSetup
+import io.github.lianeheidemann.roverquest.core.floor.PlacementRejection
 import kotlin.math.ceil
 
 sealed interface RoutePlan {
@@ -24,6 +25,32 @@ const val ROUTE_CELL_SIZE = 0.05f
  * nearest open floor within this distance, in meters, instead of being refused.
  */
 const val GOAL_SNAP_RADIUS = 0.40f
+
+/** Unseen cells this close to seen free floor, in meters, are holes in the map, not unknown floor. */
+const val SEEN_FLOOR_REACH = 0.10f
+
+/**
+ * Why the destination cannot go at [point] on what depth has seen, or `null` when it can: not on a
+ * seen obstacle, and not on floor never seen (small holes in seen free floor are fine). A spot next
+ * to an obstacle (the rover's clearance) is fine: the rover stops on the open floor beside it.
+ */
+fun destinationRejection(map: ObstacleMap, point: FloorPoint): PlacementRejection? {
+    val cell = map.cellAt(point) ?: return PlacementRejection.OUT_OF_AREA
+    return when (map.stateOf(cell)) {
+        CellState.OCCUPIED -> PlacementRejection.ON_SEEN_OBSTACLE
+        CellState.FREE -> null
+        CellState.UNKNOWN -> {
+            val reach = ceil(SEEN_FLOOR_REACH / ROUTE_CELL_SIZE).toInt()
+            val seenFreeNearby = (-reach..reach).any { dr ->
+                (-reach..reach).any { dc ->
+                    val near = Cell(cell.col + dc, cell.row + dr)
+                    near.col in 0 until map.size && near.row in 0 until map.size && map.stateOf(near) == CellState.FREE
+                }
+            }
+            if (seenFreeNearby) null else PlacementRejection.NOT_SEEN
+        }
+    }
+}
 
 /** An empty depth map on the same grid as route planning. */
 fun newObstacleMap(): ObstacleMap = ObstacleMap(ROUTE_CELL_SIZE, FloorSetup.PLAY_AREA_HALF_SIZE)
