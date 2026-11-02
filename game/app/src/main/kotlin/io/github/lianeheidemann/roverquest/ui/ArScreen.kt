@@ -15,6 +15,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconButton
@@ -693,6 +694,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             rejectionText = rejection?.let(::rejectionLabel),
             noteText = "Sem profundidade: só o obstáculo virtual bloqueia."
                 .takeIf { setup.roverPlaced && depthSupport == DepthSupport.NONE },
+            searching = hint == SetupHint.SCAN_FLOOR,
             confirmingArea = hint == SetupHint.CONFIRM_AREA,
             // Only an area the circle is on can be accepted.
             canConfirm = reticleHit != null,
@@ -805,6 +807,7 @@ private fun SetupPanel(
     warning: Boolean,
     rejectionText: String?,
     noteText: String?,
+    searching: Boolean,
     confirmingArea: Boolean,
     canConfirm: Boolean,
     showNewArea: Boolean,
@@ -837,6 +840,14 @@ private fun SetupPanel(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            // Spins while ARCore is still looking for the floor.
+            if (searching) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp,
+                )
+            }
             Text(
                 hintText,
                 color = Color.White,
