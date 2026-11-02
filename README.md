@@ -48,7 +48,7 @@ Sua casa vira a fase. Caixas, livros e almofadas de verdade se tornam obstáculo
 ## Versão beta
 
 <p align="center">
-  <img width="30%" src="https://github.com/lianeheidemann/readme-components/blob/develop/material/my-creations/image/cute-bunny-v1.png" ><img src="assets/interface/interface-v1.webp" alt="Versão beta do RoverQuest: piso detectado, rover e destino posicionados e rota desviando de um obstáculo virtual" width="40%">
+  <img width="30%" src="https://github.com/lianeheidemann/readme-components/blob/develop/material/my-creations/image/cute-bunny-v1.png" ><img src="assets/interface/interface-v2.webp" alt="Versão beta do RoverQuest: piso detectado, rover e destino posicionados e rota desviando de um obstáculo virtual" width="40%">
 </p>
 
 > **Já funciona:** detecção do piso, rover e destino por toque, rota com A* e desvio de obstáculo virtual.  
