@@ -1,7 +1,6 @@
-package io.github.lianeheidemann.roverquest.ui
+package io.github.lianeheidemann.roverquest.ui.panels
 
 import android.graphics.Bitmap
-import android.media.Image
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,57 +20,18 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.ar.core.Frame
 import io.github.lianeheidemann.roverquest.core.depth.ColoredDepth
-import io.github.lianeheidemann.roverquest.core.depth.DepthFrame
 import io.github.lianeheidemann.roverquest.core.depth.DepthIssue
 import io.github.lianeheidemann.roverquest.core.depth.DepthQuality
 import io.github.lianeheidemann.roverquest.core.depth.DepthReport
-import java.nio.ByteOrder
+import io.github.lianeheidemann.roverquest.ui.components.CompactChip
 import java.util.Locale
 
 private val PT_BR = Locale.forLanguageTag("pt-BR")
 
-/**
- * Copies the latest ARCore depth image (and the raw depth confidence, when available) into a
- * [DepthFrame]. Returns `null` when no depth image is available for this frame.
- * Must run on the thread that delivers ARCore frames (`onSessionUpdated`).
- */
-fun readDepthFrame(frame: Frame): DepthFrame? {
-    val depth = runCatching { frame.acquireDepthImage16Bits() }.getOrNull() ?: return null
-    return depth.use { image ->
-        val width = image.width
-        val height = image.height
-        val depthMm = readPlane(image, bytesPerPixel = 2)
-        val confidence = runCatching { frame.acquireRawDepthConfidenceImage() }.getOrNull()?.use { conf ->
-            if (conf.width == width && conf.height == height) readPlane(conf, bytesPerPixel = 1) else null
-        }
-        DepthFrame(width, height, depthMm, confidence)
-    }
-}
-
-/** Reads a single-plane image of unsigned 8- or 16-bit (little-endian) pixels, row by row. */
-private fun readPlane(image: Image, bytesPerPixel: Int): IntArray {
-    val plane = image.planes[0]
-    val buffer = plane.buffer.duplicate().order(ByteOrder.LITTLE_ENDIAN)
-    val out = IntArray(image.width * image.height)
-    for (y in 0 until image.height) {
-        val rowStart = y * plane.rowStride
-        for (x in 0 until image.width) {
-            val offset = rowStart + x * plane.pixelStride
-            out[y * image.width + x] = if (bytesPerPixel == 2) {
-                buffer.getShort(offset).toInt() and 0xFFFF
-            } else {
-                buffer.get(offset).toInt() and 0xFF
-            }
-        }
-    }
-    return out
-}
-
 /** False-color depth drawn over the camera feed: red is near, blue is far, no data is clear. */
 @Composable
-fun DepthOverlay(colored: ColoredDepth, modifier: Modifier = Modifier) {
+internal fun DepthOverlay(colored: ColoredDepth, modifier: Modifier = Modifier) {
     val bitmap = remember(colored) {
         Bitmap.createBitmap(colored.argb, colored.width, colored.height, Bitmap.Config.ARGB_8888)
             .asImageBitmap()
@@ -87,7 +47,7 @@ fun DepthOverlay(colored: ColoredDepth, modifier: Modifier = Modifier) {
 
 /** Two short lines: the reading at the screen center and a legend, with small recording buttons. */
 @Composable
-fun DiagnosticPanel(
+internal fun DiagnosticPanel(
     report: DepthReport,
     supportText: String,
     recording: Boolean,

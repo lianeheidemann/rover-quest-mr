@@ -31,6 +31,7 @@ import io.github.lianeheidemann.roverquest.core.startup.ArAvailability
 import io.github.lianeheidemann.roverquest.core.startup.CameraPermission
 import io.github.lianeheidemann.roverquest.core.startup.StartupState
 import io.github.lianeheidemann.roverquest.core.startup.resolveStartupState
+import io.github.lianeheidemann.roverquest.ui.ar.ArScreen
 
 @Composable
 fun RoverQuestApp() {
