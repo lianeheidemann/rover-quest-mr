@@ -1,7 +1,7 @@
 # RoverQuest — Guia de implementação passo a passo
 
-> **Status:** Partes 1 a 4 validadas no S23 Ultra; Partes 5 e 6 implementadas, com problemas vistos no aparelho (ver pendências nas partes).  
-> **Plataforma:** Android, com testes reais no Galaxy S23 Ultra.  
+> **Status:** Partes 1 a 4 validadas no celular de teste; Partes 5 e 6 implementadas, com problemas vistos no aparelho (ver pendências nas partes).  
+> **Plataforma:** Android, com testes reais no Galaxy S23 Ultra (o "celular de teste" deste guia).  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
 
@@ -30,10 +30,10 @@
 ### Parte 1 — Aplicativo mínimo ✅
 
 - [x] Projeto Kotlin/Compose com dois módulos: `:app` (Android) e `:core` (Kotlin puro).
-- [x] Sessão AR com câmera funcionando no S23 Ultra.
+- [x] Sessão AR com câmera funcionando no celular de teste.
 - [x] Verificar no aparelho se a profundidade do ARCore é suportada e registrar o resultado.
-  - **Resultado (S23 Ultra):** profundidade suportada, **com Raw Depth**; rastreamento ativo e piso detectado.
-- [x] Mensagens claras para permissão negada e AR indisponível (implementadas; AR indisponível não é testável no S23 Ultra).
+  - **Resultado (celular de teste):** profundidade suportada, **com Raw Depth**; rastreamento ativo e piso detectado.
+- [x] Mensagens claras para permissão negada e AR indisponível (implementadas; AR indisponível não é testável no celular de teste).
 - [x] Comandos de build/teste no `AGENTS.md` e CI que compila e roda os testes: em todo PR para a `main` e após cada merge nela, com cache do Gradle.
 
 **Concluído quando:** o APK instala via `adb`, abre a sessão AR no aparelho e o suporte a profundidade está documentado.
@@ -44,7 +44,7 @@
 - [x] Tocar para posicionar o rover (forma simples) e o destino.
 - [x] Manter ambos fixos ao piso enquanto o celular se move.
 - [x] Indicar quando o rastreamento é perdido.
-  - **Validado no S23 Ultra:** piso detectado, rover e destino posicionados por toque e mantidos no
+  - **Validado no celular de teste:** piso detectado, rover e destino posicionados por toque e mantidos no
     lugar ao andar ao redor e ver de outros ângulos. O rover cria a âncora do piso e o destino fica
     relativo a ela; regras de posicionamento e avisos em `:core` (`core/floor/FloorSetup.kt`).
 
@@ -57,7 +57,7 @@
 - [x] A* no módulo `:core`, tratando ausência de rota.
 - [x] Exibir a rota sobre o piso.
 - [x] Testes JUnit da lógica.
-  - **Validado no S23 Ultra:** a rota em pontos contorna o obstáculo virtual e continua presa ao piso
+  - **Validado no celular de teste:** a rota em pontos contorna o obstáculo virtual e continua presa ao piso
     vista de vários ângulos. Grade de 5 cm em 5 × 5 m centrada no rover
     (`core/nav/`); A* com 8 vizinhos, sem cortar quinas. O obstáculo manual é uma caixa virtual de
     30 cm, ampliada pelo raio do rover na grade. Sem profundidade ainda, as células desconhecidas são
@@ -70,7 +70,7 @@
 - [x] Ler e visualizar a profundidade em um modo de diagnóstico.
 - [x] Avisar quando a leitura estiver indisponível ou incerta.
 - [x] Gravar uma sessão do ARCore para repetir testes sem reposicionar o celular.
-  - **Validado no S23 Ultra:** leituras confiáveis do piso a 0,68 m, 0,92 m e 1,26 m (confiança
+  - **Validado no celular de teste:** leituras confiáveis do piso a 0,68 m, 0,92 m e 1,26 m (confiança
     82–94%, cobertura 100%), cores na orientação certa e leitura incerta sinalizada (2,09 m com
     confiança 0%). Limitação vista: o reflexo de luz no piso brilhante é lido como "longe". A gravação
     e a repetição de sessão **ainda não foram testadas no aparelho**.
@@ -89,7 +89,7 @@
 - [x] Célula não observada continua desconhecida, nunca livre.
 - [x] Sobreposição visual da grade para depuração.
 - [x] Obstáculo manual continua disponível.
-  - **Testado no S23 Ultra: falhou.** A profundidade vira pontos no frame da âncora
+  - **Testado no celular de teste: falhou.** A profundidade vira pontos no frame da âncora
     do piso (`core/depth/DepthProjection.kt`). Pontos entre 5 e 40 cm de altura votam "obstáculo";
     pontos no piso (±3 cm) votam "livre", até 2,5 m da câmera; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
     mesa) não votam. Uma célula só muda de estado após 3 votos líquidos, com histerese
@@ -97,7 +97,7 @@
     piso visto como livre e, se faltar ver parte do caminho, pede para apontar a câmera. Chip "Mapa":
     verde = livre, vermelho = obstáculo visto, laranja = folga do rover ou obstáculo virtual. Sem
     suporte a profundidade, só o obstáculo virtual bloqueia, com aviso.
-  - **Corrigido, aguardando validação no S23 Ultra:** longe do rover o chão era marcado como
+  - **Corrigido, aguardando validação no celular de teste:** longe do rover o chão era marcado como
     obstáculo, porque a altura era medida em relação à âncora, e alguns centímetros de diferença
     (âncora fora do chão real, erro da profundidade com a distância) bastavam. Agora, a cada leitura,
     o jogo ajusta um plano ao chão que a profundidade vê (mediana + mínimos quadrados, ignorando
@@ -111,7 +111,7 @@
 - [x] Rover segue a rota com movimento suave.
 - [ ] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
 - [ ] Replaneja quando o mapa muda de forma estável.
-  - **Validado no S23 Ultra:** o rover seguiu a rota contornando o obstáculo virtual e chegou ao
+  - **Validado no celular de teste:** o rover seguiu a rota contornando o obstáculo virtual e chegou ao
     destino. **Falta validar:** pausa/replanejamento e o trajeto contornando uma caixa real, que
     depende da Parte 5. Botão "Ir" inicia o trajeto; o rover anda a
     15 cm/s, gira no lugar quando precisa virar mais de 20° e passa exatamente pelos cantos da rota
@@ -120,8 +120,8 @@
     mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
     O rover para 18 cm antes do centro do destino (bandeira 3D), sem subir no marcador, e faz uma dancinha de
     vitória virado para o jogador: balança, gira uma volta e dá dois pulinhos de frente para a tela (`core/nav/RoverDance.kt`, não testado no
-    S23 Ultra).
-  - **Extra (pedido da autora), não testado no S23 Ultra:** ao colocar o rover pela primeira vez na
+    celular de teste).
+  - **Extra (pedido da autora), não testado no celular de teste:** ao colocar o rover pela primeira vez na
     partida, ele dá meia-volta, vem até perto do celular (para 40 cm antes, no máximo 1,2 m), balança
     como quem cumprimenta, dá outra meia-volta e volta ao ponto inicial (`core/nav/RoverGreeting.kt`).
     É só animação: não desvia de obstáculos e os toques esperam ela terminar.
