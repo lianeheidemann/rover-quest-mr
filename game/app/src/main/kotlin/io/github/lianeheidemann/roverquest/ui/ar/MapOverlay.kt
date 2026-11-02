@@ -1,4 +1,4 @@
-package io.github.lianeheidemann.roverquest.ui
+package io.github.lianeheidemann.roverquest.ui.ar
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,7 +27,7 @@ private const val OVERLAY_HEIGHT = 0.001f
  * @param version changes whenever [colors] change, to rebuild the meshes.
  */
 @Composable
-fun SceneScope.MapOverlay(colors: IntArray, gridSize: Int, cellSize: Float, halfSize: Float, version: Int) {
+internal fun SceneScope.MapOverlay(colors: IntArray, gridSize: Int, cellSize: Float, halfSize: Float, version: Int) {
     for (argb in intArrayOf(COLOR_FREE, COLOR_CLEARANCE, COLOR_OCCUPIED)) {
         val material = remember(materialLoader, argb) { materialLoader.createColorInstance(Color(argb)) }
         // A new geometry per update: the number of cells of each color changes every time.

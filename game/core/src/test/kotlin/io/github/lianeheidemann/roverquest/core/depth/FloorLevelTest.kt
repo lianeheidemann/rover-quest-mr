@@ -34,6 +34,13 @@ class FloorLevelTest {
         return samples
     }
 
+    /** Feeds the same frame [frames] times (the estimate moves a little each frame). */
+    private fun FloorLevel.settle(samples: List<FloorSample>, frames: Int = 40): List<FloorSample> {
+        var leveled = samples
+        repeat(frames) { leveled = level(samples) }
+        return leveled
+    }
+
     private fun stateAt(samples: List<FloorSample>, x: Float, z: Float): CellState {
         val map = newObstacleMap()
         repeat(4) { map.integrate(samples) }
@@ -47,7 +54,7 @@ class FloorLevelTest {
         assertEquals(CellState.OCCUPIED, stateAt(raw, 0f, -2f))
 
         val level = FloorLevel()
-        val leveled = level.level(raw)
+        val leveled = level.settle(raw)
         assertEquals(0.06f, level.a, 0.01f)
         assertEquals(CellState.FREE, stateAt(leveled, 0f, -2f))
         assertEquals(CellState.FREE, stateAt(leveled, 0.5f, -0.5f))
@@ -57,7 +64,7 @@ class FloorLevelTest {
     fun `tilted floor stays free and a box on it is still an obstacle`() {
         val tilt = { _: Float, z: Float -> -z * 0.025f } // rises 5 cm every 2 m away from the anchor
         val samples = floor(tilt) + box(0.3f, -1.8f, top = 0.2f, base = tilt)
-        val leveled = FloorLevel().level(samples)
+        val leveled = FloorLevel().settle(samples)
         assertEquals(CellState.FREE, stateAt(leveled, -0.5f, -2.4f))
         assertEquals(CellState.OCCUPIED, stateAt(leveled, 0.45f, -1.65f))
     }
@@ -67,7 +74,7 @@ class FloorLevelTest {
         val boxes = (0 until 6).flatMap { k -> box(-0.9f + k * 0.3f, -1.2f, top = 0.12f) } +
             (0 until 6).flatMap { k -> box(-0.9f + k * 0.3f, -0.9f, top = 0.12f) }
         val level = FloorLevel()
-        level.level(floor({ _, _ -> 0f }) + boxes + boxes)
+        level.settle(floor({ _, _ -> 0f }) + boxes + boxes)
         assertEquals(0f, level.a, 0.01f)
         assertEquals(0f, level.c, 0.01f)
     }
@@ -75,17 +82,54 @@ class FloorLevelTest {
     @Test
     fun `keeps the last floor when too little of it is seen`() {
         val level = FloorLevel()
-        level.level(floor({ _, _ -> 0.05f }))
+        level.settle(floor({ _, _ -> 0.05f }))
         val fitted = level.a
         // Only a box in view: the floor stays where it was.
         level.level(box(0f, -1f, top = 0.2f))
         assertEquals(fitted, level.a)
     }
 
+    /** Reflections on a shiny floor: read too far, so points spread from 3 to 12 cm below it. */
+    private fun reflections(count: Int, seed: Int = 7): List<FloorSample> {
+        val random = Random(seed)
+        return List(count) {
+            FloorSample(-1f + random.nextFloat() * 2f, -random.nextFloat() * 2.5f, -0.03f - random.nextFloat() * 0.09f)
+        }
+    }
+
+    @Test
+    fun `reflections on a shiny floor do not sink it`() {
+        val clean = floor({ _, _ -> 0f })
+        val samples = clean + reflections(clean.size) // as many reflections as floor points
+        val level = FloorLevel()
+        val leveled = level.settle(samples)
+        assertEquals(0f, level.a, 0.01f)
+        assertEquals(CellState.FREE, stateAt(leveled, 0f, -2f))
+        assertEquals(CellState.FREE, stateAt(leveled, 0.5f, -0.5f))
+    }
+
+    @Test
+    fun `the estimate cannot ratchet down frame after frame`() {
+        val level = FloorLevel()
+        repeat(30) { frame ->
+            val clean = floor({ _, _ -> 0f }, seed = frame)
+            level.level(clean + reflections(clean.size, seed = 100 + frame))
+        }
+        assertTrue(level.a > -0.015f, "floor sank to ${level.a}")
+    }
+
+    @Test
+    fun `one bad frame barely moves the floor`() {
+        val level = FloorLevel()
+        level.settle(floor({ _, _ -> 0f }))
+        level.level(floor({ _, _ -> 0.07f }))
+        assertTrue(level.a < 0.02f, "jumped to ${level.a}")
+    }
+
     @Test
     fun `a steep surface is not taken for the floor`() {
         val level = FloorLevel()
-        level.level(floor({ _, z -> -z * 0.3f }))
+        level.settle(floor({ _, z -> -z * 0.3f }))
         assertEquals(0f, level.a)
         assertEquals(0f, level.c)
         level.reset()
