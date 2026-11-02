@@ -103,6 +103,9 @@
     o jogo ajusta um plano ao chão que a profundidade vê (mediana + mínimos quadrados, ignorando
     caixas e móveis) e mede as alturas a partir dele (`core/depth/FloorLevel.kt`). Planos muito
     inclinados ou com poucos pontos são ignorados, mantendo o anterior.
+  - Destino marcado colado num móvel (a profundidade vê o ponto como ocupado): a rota vai até o
+    chão livre alcançável mais próximo, a até 30 cm, e o rover para ali virado para a bandeira, em vez
+    de mostrar "Destino num obstáculo" (`GOAL_SNAP_RADIUS` em `core/nav/RoutePlanner.kt`).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
