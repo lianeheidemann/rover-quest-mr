@@ -12,7 +12,6 @@
   <img src="assets/badge/badge_em-construcao-azul-v1.svg">
   <a href="https://github.com/lianeheidemann/rover-quest-mr/releases/latest"><img src="assets/badge/badge_download-apk-demo-v1.svg" alt="Download APK da versão demo"></a>
   <a href="https://github.com/lianeheidemann/rover-quest-mr/actions/workflows/ci.yml"><img src="https://raw.githubusercontent.com/lianeheidemann/rover-quest-mr/badges/ci.svg" alt="CI"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/licen%C3%A7a-MIT-blue" alt="Licença MIT"></a>
   <br>
   <br><img width="100%" alt="Faixa de aviso" src="assets/fun/caution-tape/caution-tape-larga-v4.svg" />
 </p>
