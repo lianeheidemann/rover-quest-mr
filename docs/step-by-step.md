@@ -1,6 +1,6 @@
 # RoverQuest — Guia de implementação passo a passo
 
-> **Status:** Partes 1 a 4 validadas no celular de teste; Partes 5 e 6 implementadas, com problemas vistos no aparelho (ver pendências nas partes).  
+> **Status:** Partes 1 a 4 validadas no celular de teste; Partes 5 e 6 implementadas e parcialmente validadas (falta o teste com caixa real).  
 > **Plataforma:** Android, com testes reais no Galaxy S23 Ultra (o "celular de teste" deste guia).  
 > **Objetivo:** criar um jogo divertido em RA móvel com interação espacial: o rover virtual planeja rotas evitando obstáculos físicos identificados a partir de profundidade.  
 > **MVP:** posicionar o rover no piso, marcar o destino e fazê-lo contornar **uma caixa real estática** com um mapa local de ocupação.
@@ -89,23 +89,26 @@
 - [x] Célula não observada continua desconhecida, nunca livre.
 - [x] Sobreposição visual da grade para depuração.
 - [x] Obstáculo manual continua disponível.
-  - **Teste no celular: falhou.** A profundidade vira pontos no frame da âncora
-    do piso (`core/depth/DepthProjection.kt`). Pontos entre 5 e 40 cm de altura votam "obstáculo";
-    pontos no piso (±3 cm) votam "livre", até 2,5 m da câmera; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
-    mesa) não votam. Uma célula só muda de estado após 3 votos líquidos, com histerese
-    (`core/nav/ObstacleMap.kt`). Obstáculos reais são ampliados pelo raio do rover; o A* só atravessa
-    piso visto como livre e, se faltar ver parte do caminho, pede para apontar a câmera. Chip "Mapa":
-    verde = livre, vermelho = obstáculo visto, laranja = folga do rover ou obstáculo virtual. Sem
-    suporte a profundidade, só o obstáculo virtual bloqueia, com aviso.
-  - **Corrigido, aguardando validação no celular de teste:** longe do rover o chão era marcado como
-    obstáculo, porque a altura era medida em relação à âncora, e alguns centímetros de diferença
-    (âncora fora do chão real, erro da profundidade com a distância) bastavam. Agora, a cada leitura,
-    o jogo ajusta um plano ao chão que a profundidade vê (mediana + mínimos quadrados, ignorando
-    caixas e móveis) e mede as alturas a partir dele (`core/depth/FloorLevel.kt`). Planos muito
-    inclinados ou com poucos pontos são ignorados, mantendo o anterior.
-  - Destino marcado colado num móvel (a profundidade vê o ponto como ocupado): a rota vai até o
-    chão livre alcançável mais próximo, entre 22 e 40 cm da bandeira, e o rover para ali virado para a bandeira, em vez
-    de mostrar "Destino num obstáculo" (`GOAL_SNAP_RADIUS` em `core/nav/RoutePlanner.kt`).
+
+**Como funciona**
+- A profundidade vira pontos no frame da âncora do piso (`core/depth/DepthProjection.kt`), até 2,5 m da câmera.
+- A cada leitura, o jogo ajusta um plano ao chão visto (mediana + mínimos quadrados, ignorando caixas e
+  móveis) e mede as alturas a partir dele, não da âncora (`core/depth/FloorLevel.kt`). Planos muito
+  inclinados ou com poucos pontos são ignorados.
+- Pontos entre 5 e 40 cm acima do chão votam "obstáculo"; pontos no chão (±3 cm) votam "livre"; reflexos
+  abaixo do chão e tampos acima de 40 cm não votam. Uma célula só muda após 3 votos líquidos, com
+  histerese (`core/nav/ObstacleMap.kt`).
+- Obstáculos reais são ampliados pelo raio do rover. O A* só atravessa chão visto como livre; se faltar
+  ver parte do caminho, pede para apontar a câmera.
+- Destino colado num móvel: a rota vai ao chão livre alcançável mais próximo, entre 22 e 40 cm da
+  bandeira, em vez de recusar (`core/nav/RoutePlanner.kt`).
+- Ícone "Mapa": verde = livre, vermelho = obstáculo visto, laranja = folga do rover ou obstáculo virtual,
+  sem cor = não visto. Sem suporte a profundidade, só o obstáculo virtual bloqueia, com aviso.
+
+**No celular de teste**
+- ✅ Com o ajuste do chão, o piso livre fica verde também longe do rover; sofá e cadeira ficam vermelhos.
+- ⚠️ Pequenos furos sem cor no meio do verde às vezes atrasam a rota ("Aponte a câmera para o caminho").
+- ⏳ Falta: uma caixa real aparecer bloqueada de forma estável e a rota desviar dela.
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
@@ -114,22 +117,31 @@
 - [x] Rover segue a rota com movimento suave.
 - [ ] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
 - [ ] Replaneja quando o mapa muda de forma estável.
-  - **Validado no celular de teste:** o rover seguiu a rota contornando o obstáculo virtual e chegou ao
-    destino. **Falta validar:** pausa/replanejamento e o trajeto contornando uma caixa real, que
-    depende da Parte 5. Botão "Ir" inicia o trajeto; o rover anda a
-    15 cm/s, gira no lugar quando precisa virar mais de 20° e passa exatamente pelos cantos da rota
-    (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
-    rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
-    mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
-    O rover para a 22 cm do centro do destino (bandeira 3D), na primeira vez que chega a essa distância em qualquer trecho da rota, sem subir no marcador, e faz uma dancinha de
-    vitória virado para o jogador: balança, gira uma volta e dá dois pulinhos de frente para a tela (`core/nav/RoverDance.kt`, não testado no
-    celular de teste).
-  - **Extra (pedido da autora), ainda não testado no celular:** ao colocar o rover pela primeira vez na
-    partida, ele dá meia-volta, vem até perto do celular (para 40 cm antes, no máximo 1,2 m), balança
-    como quem cumprimenta, dá outra meia-volta e volta ao ponto inicial (`core/nav/RoverGreeting.kt`).
-    É só animação: não desvia de obstáculos e os toques esperam ela terminar.
+
+**Como funciona** (`core/nav/RoverMotion.kt`)
+- Botão "Ir" inicia o trajeto; "Parar" interrompe. O rover anda a 15 cm/s, gira no lugar quando precisa
+  virar mais de 20° e passa exatamente pelos cantos da rota.
+- Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há rota por chão visto como livre, e
+  retoma sozinho. Quando o mapa ou o destino/obstáculo mudam, a rota é recalculada de onde o rover está.
+- Para a 22 cm do centro da bandeira, na primeira vez que chega a essa distância em qualquer trecho da
+  rota: nunca em cima dela. O destino precisa ficar a pelo menos 30 cm do rover.
+
+**No celular de teste**
+- ✅ O rover seguiu a rota contornando o obstáculo virtual e chegou ao destino.
+- ⏳ Falta: pausa ao perder o rastreamento, replanejamento e o trajeto contornando uma caixa real.
 
 **Concluído quando:** o rover chega ao destino contornando a caixa real. **(MVP)**
+
+### Extras de jogo (pedidos da autora)
+
+Fora do plano original; animações puras em `:core`, sem efeito nas regras.
+
+| Extra | Onde | No celular de teste |
+| --- | --- | --- |
+| Saudação: ao ser colocado, o rover dá meia-volta, vem até perto do celular, cumprimenta e volta | `core/nav/RoverGreeting.kt` | ⏳ não testado |
+| Dancinha de vitória: vira para o jogador, balança, gira e dá dois pulinhos de frente para a tela | `core/nav/RoverDance.kt` | ⏳ não testado |
+| Modelos 3D do rover e da bandeira de chegada, otimizados | `app/src/main/assets/models/` | ✅ aparecem no jogo |
+| Confirmar a área de jogo, lanterna, troca automática Destino → Obstáculo, ícone girando ao procurar o piso | `app/.../ui/ArScreen.kt` | ✅ confirmar área e lanterna; ⏳ demais |
 
 ### Parte 7 — Jogo
 
@@ -172,4 +184,4 @@ Todo o código fica em `game/`, com dois módulos: `:app` (Android, AR e interfa
 
 Ver [references.md](references.md).
 
-> **Próxima ação:** corrigir a altura do chão no mapa (Parte 5) e validar as Partes 5 e 6 no aparelho. Não implementar todas as partes ao mesmo tempo.
+> **Próxima ação:** testar no celular uma caixa real entre o rover e a bandeira (valida as Partes 5 e 6, o MVP) e a pausa ao perder o rastreamento. Não implementar todas as partes ao mesmo tempo.
