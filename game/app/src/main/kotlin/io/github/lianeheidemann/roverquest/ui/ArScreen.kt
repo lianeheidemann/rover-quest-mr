@@ -332,6 +332,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         when (result) {
             is PlacementResult.Accepted -> {
                 setup = result.setup
+                // Destination set: the next tap most likely places the obstacle.
+                if (tapMode == TapMode.DESTINATION) tapMode = TapMode.OBSTACLE
                 // A new destination after arriving: wait for the player to start again.
                 if (motion.status == MotionStatus.ARRIVED) {
                     motion = motion.stop()
