@@ -291,6 +291,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             }
             if (dance?.done != false) break
         }
+        // Keep facing the player after the dance instead of snapping back.
+        dance?.let { motion = motion.copy(pose = motion.pose.copy(heading = it.heading)) }
         dance = null
     }
 
