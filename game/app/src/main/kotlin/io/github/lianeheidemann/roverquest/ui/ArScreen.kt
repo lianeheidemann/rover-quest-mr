@@ -709,7 +709,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
             if (diagnosticOn && areaConfirmed) {
                 DiagnosticPanel(
                     report = depthReport,
-                    supportText = depthLabel(depthSupport),
+                    // Floor estimate from depth, to see on the phone whether it stays steady.
+                    supportText = depthLabel(depthSupport) + if (floorAnchor != null && mapping) {
+                        val tilt = kotlin.math.hypot(floorLevel.b, floorLevel.c) * 100
+                        String.format(Locale("pt", "BR"), " · chão %+.1f cm · incl. %.1f%%", floorLevel.a * 100, tilt)
+                    } else "",
                     recording = recorder.state == ARRecorder.State.RECORDING,
                     recordingError = recorder.errorMessage.takeIf {
                         recorder.state == ARRecorder.State.ERROR || recorder.state == ARRecorder.State.IO_ERROR

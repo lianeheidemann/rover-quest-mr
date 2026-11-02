@@ -2,20 +2,33 @@ package io.github.lianeheidemann.roverquest.core.depth
 
 import kotlin.math.abs
 
-/** Only points this close to the current floor estimate, in meters, may be floor. */
-const val FLOOR_SEARCH_RANGE = 0.15f
+/**
+ * Only points this close to the anchor's level (following the current tilt), in meters, may be
+ * floor. Tied to the anchor, not to the last estimate, so the estimate cannot drift away step by
+ * step (for example sinking into reflections on a shiny floor).
+ */
+const val FLOOR_SEARCH_RANGE = 0.10f
 
 /** Points this close to the fitted floor, in meters, are used to refine it. */
 const val FLOOR_FIT_RANGE = 0.04f
 
+/** Height bins, in meters, used to find the most common height: the floor. */
+private const val FLOOR_BIN = 0.01f
+
 /** Fewer floor points than this in a frame and the previous floor is kept. */
 const val MIN_FLOOR_POINTS = 200
 
-/** Largest accepted floor slope (rise per meter, about 4.5 degrees). Steeper is not a floor. */
-const val MAX_FLOOR_SLOPE = 0.08f
+/**
+ * Largest accepted floor slope (rise per meter, about 2.3 degrees). ARCore's floor follows
+ * gravity, so only depth errors tilt it; steeper is not the floor.
+ */
+const val MAX_FLOOR_SLOPE = 0.04f
 
-/** Largest accepted floor offset from the anchor, in meters. */
-const val MAX_FLOOR_OFFSET = 0.15f
+/** Largest accepted floor offset from the anchor, in meters: the anchor was placed on the floor. */
+const val MAX_FLOOR_OFFSET = 0.08f
+
+/** Share of the way the floor estimate moves towards each new fit, so one bad frame does little. */
+const val FLOOR_SMOOTHING = 0.2f
 
 /**
  * The floor as depth sees it, in the floor anchor's frame: `height = a + b·x + c·z`.
@@ -24,6 +37,10 @@ const val MAX_FLOOR_OFFSET = 0.15f
  * the real floor (after the phone shakes) and depth errors grow with distance. Far from the
  * anchor that alone lifts the floor past the obstacle threshold, so plain floor turns into
  * obstacles. [level] fits the floor seen in each frame and gives heights above it instead.
+ *
+ * The floor is the most common height near the anchor's level: reflections on a shiny floor
+ * (read too far, so below it) and boxes (above it) are fewer and spread out, so they do not move
+ * that peak.
  */
 class FloorLevel {
     var a = 0f
@@ -50,23 +67,32 @@ class FloorLevel {
     }
 
     private fun fit(samples: List<FloorSample>) {
-        val candidates = samples.filter { abs(it.height - floorAt(it.x, it.z)) <= FLOOR_SEARCH_RANGE }
+        // Heights against the anchor's level, keeping only the current tilt.
+        fun tilted(s: FloorSample) = s.height - (b * s.x + c * s.z)
+        val candidates = samples.filter { abs(tilted(it)) <= FLOOR_SEARCH_RANGE }
         if (candidates.size < MIN_FLOOR_POINTS) return
 
-        // Start from the current tilt with the median offset: the floor is most of the points, so
-        // boxes and furniture do not move the median much.
-        val residuals = candidates.map { it.height - floorAt(it.x, it.z) }.sorted()
-        var fa = a + residuals[residuals.size / 2]
+        // Most common height: the floor.
+        val bins = ((2 * FLOOR_SEARCH_RANGE) / FLOOR_BIN).toInt() + 1
+        val counts = IntArray(bins)
+        for (s in candidates) {
+            val i = ((tilted(s) + FLOOR_SEARCH_RANGE) / FLOOR_BIN).toInt().coerceIn(0, bins - 1)
+            counts[i]++
+        }
+        val peak = counts.indices.maxBy { counts[it] }
+        var fa = -FLOOR_SEARCH_RANGE + (peak + 0.5f) * FLOOR_BIN
         var fb = b
         var fc = c
-        repeat(2) {
+        repeat(3) {
             val inliers = candidates.filter { abs(it.height - (fa + fb * it.x + fc * it.z)) <= FLOOR_FIT_RANGE }
             if (inliers.size < MIN_FLOOR_POINTS) return
             val plane = fitPlane(inliers) ?: return
             fa = plane[0]; fb = plane[1]; fc = plane[2]
         }
         if (abs(fb) > MAX_FLOOR_SLOPE || abs(fc) > MAX_FLOOR_SLOPE || abs(fa) > MAX_FLOOR_OFFSET) return
-        a = fa; b = fb; c = fc
+        a += (fa - a) * FLOOR_SMOOTHING
+        b += (fb - b) * FLOOR_SMOOTHING
+        c += (fc - c) * FLOOR_SMOOTHING
     }
 }
 

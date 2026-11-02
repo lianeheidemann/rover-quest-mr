@@ -92,9 +92,9 @@
 
 **Como funciona**
 - A profundidade vira pontos no frame da âncora do piso (`core/depth/DepthProjection.kt`), até 2,5 m da câmera.
-- A cada leitura, o jogo ajusta um plano ao chão visto (mediana + mínimos quadrados, ignorando caixas e
-  móveis) e mede as alturas a partir dele, não da âncora (`core/depth/FloorLevel.kt`). Planos muito
-  inclinados ou com poucos pontos são ignorados.
+- A cada leitura, o jogo ajusta um plano ao chão visto (altura mais comum + mínimos quadrados, ignorando
+  caixas, móveis e reflexos) e mede as alturas a partir dele, não da âncora (`core/depth/FloorLevel.kt`).
+  Planos muito inclinados ou com poucos pontos são ignorados.
 - Pontos entre 5 e 40 cm acima do chão votam "obstáculo"; pontos no chão (±3 cm) votam "livre"; reflexos
   abaixo do chão e tampos acima de 40 cm não votam. Uma célula só muda após 3 votos líquidos, com
   histerese (`core/nav/ObstacleMap.kt`).
@@ -111,6 +111,10 @@
 - ✅ Caixa de leite real (~7 cm de largura), sem obstáculo virtual: apareceu vermelha com folga laranja, o chão em volta
   verde, e a rota desviou dela.
 - ⚠️ Num momento o chão inteiro ficou vermelho antes de se corrigir (provável reflexo do piso liso).
+  **Corrigido, aguardando validação:** o chão agora é a altura mais comum perto da âncora (reflexos
+  abaixo e caixas acima não o deslocam), a busca fica presa à âncora (±10 cm), a inclinação aceita
+  caiu para ~2° e cada leitura move a estimativa só 20%. Com "Profundidade" ligado, o painel mostra
+  "chão ±x cm · incl. y%" para conferir no celular.
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
