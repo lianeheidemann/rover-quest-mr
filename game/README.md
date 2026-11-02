@@ -106,9 +106,18 @@ Estilo funcional: recebe dados prontos (coordenadas, estados) e devolve objetos 
 | --- | --- |
 | `MainActivity.kt` | Ponto de entrada; só abre a interface |
 | `ui/RoverQuestApp.kt` | Pede a permissão da câmera, verifica o ARCore e escolhe a tela via `resolveStartupState` (`:core`) |
-| `ui/ArScreen.kt` | Sessão AR (SceneView): converte o toque no piso para coordenadas da âncora, chama o `FloorSetup`, lê a profundidade a 10 Hz para o mapa, avança o rover e as animações a cada quadro e desenha rover, bandeira, obstáculo e rota como filhos da âncora; barra de status (profundidade, mapa, lanterna, ⋮ Resetar jogo) e painel de instruções |
-| `ui/DepthDiagnostics.kt` | Lê a imagem de profundidade do ARCore, mostra a sobreposição colorida e o painel de diagnóstico (gravar e repetir sessão) |
-| `ui/MapOverlay.kt` | Desenha a grade do mapa de obstáculos sobre o piso |
+| `ui/Labels.kt` | Textos mostrados ao jogador (rastreamento, profundidade, dicas e recusas) |
+| `ui/ar/ArScreen.kt` | Tela do jogo: liga a sessão AR (SceneView), os estados abaixo, a cena 3D e os painéis |
+| `ui/ar/GameState.kt` | Estado da partida (setup, rover, saudação, dança, âncora) e ações do jogador (tocar, Ir, Parar, Recomeçar), repassadas ao `:core` |
+| `ui/ar/DepthMapper.kt` | Lê a profundidade do ARCore a 10 Hz e alimenta `FloorLevel` → `ObstacleMap` e o diagnóstico |
+| `ui/ar/SessionRecordings.kt` | Grava e repete a sessão do ARCore (MP4 em pasta privada do app) |
+| `ui/ar/FrameLoop.kt` | `RunEachFrame`: loop por quadro que move o rover e toca a saudação e a dança |
+| `ui/ar/ArSceneContent.kt` | Nós 3D presos à âncora: rover, bandeira, obstáculo virtual, pontos da rota e retículo |
+| `ui/ar/MapOverlay.kt` | Desenha a grade do mapa de obstáculos sobre o piso |
+| `ui/panels/StatusBar.kt` | Barra do topo: rastreamento, profundidade, mapa, lanterna e ⋮ Resetar jogo |
+| `ui/panels/SetupPanel.kt` | Painel de baixo: dica, Ir/Parar, Destino/Obstáculo, ✕, ↻ e confirmar área |
+| `ui/panels/DepthDiagnostics.kt` | Sobreposição colorida da profundidade e painel de diagnóstico (gravar/repetir) |
+| `ui/components/Controls.kt` | Botões reutilizados: `IconToggle` e `CompactChip` |
 | `assets/models/` | Modelos 3D. O rover usa `rover-mini-lite.glb` (58 mil vértices, texturas de 1024 px), gerado a partir de `rover-mini.glb`; `rover.glb` e `rover-mini.glb` são os originais, guardados para a futura troca de rover. A bandeira de chegada usa `destination-flag-lite.glb` (68 mil vértices, texturas de 1024 px), gerado a partir do original `destination-flag.glb` |
 | `res/` | Ícones (Material, Apache 2.0), tema escuro, tela de abertura e textos |
 
@@ -127,8 +136,8 @@ flowchart TD
     T(["👆 Toque na tela"])
     subgraph app [":app · Android"]
         R("ReticleNode<br/>acerto no piso · ARCore")
-        C("ArScreen<br/>coordenadas da âncora do piso")
-        D("ArScreen<br/>desenha a rota e o aviso")
+        C("GameState.onTap<br/>coordenadas da âncora do piso")
+        D("ArSceneContent · SetupPanel<br/>desenha a rota e o aviso")
     end
     subgraph core [":core · Kotlin puro"]
         F("FloorSetup<br/>placeDestination · placeObstacle")
@@ -174,7 +183,7 @@ config:
 flowchart TD
     D(["📷 Imagem de profundidade · ARCore"])
     subgraph app [":app · Android"]
-        R("readDepthFrame<br/>copia mm e confiança")
+        R("DepthMapper<br/>copia mm e confiança")
     end
     subgraph core [":core · Kotlin puro"]
         P("projectToFloor<br/>pontos na âncora do piso")
@@ -182,7 +191,7 @@ flowchart TD
         M("ObstacleMap<br/>votos com histerese")
         G("planRoute<br/>grade + A*")
     end
-    V("ArScreen<br/>rota, mapa e rover")
+    V("ArSceneContent<br/>rota, mapa e rover")
 
     D --> R --> P --> L --> M --> G --> V
 
