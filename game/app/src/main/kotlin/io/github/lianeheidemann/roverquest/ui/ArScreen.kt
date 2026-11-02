@@ -201,6 +201,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     // When first placed, the rover drives up to the player to say hello, then goes back.
     var greeting by remember { mutableStateOf<RoverGreeting?>(null) }
     var greeted by remember { mutableStateOf(false) }
+    // Bumped when the rover is removed, to load a fresh model for the next one (see roverModel).
+    var roverModelGeneration by remember { mutableIntStateOf(0) }
     // Latest camera position in world space; read when the rover is placed.
     val cameraPosition = remember { FloatArray(3) }
     val route = remember(setup, mapVersion, mapping, routeStart) {
@@ -315,6 +317,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     }
 
     fun restart() {
+        // Its model goes with the rover's node: load a fresh one for the next rover.
+        if (floorAnchor != null) roverModelGeneration++
         floorAnchor?.detach()
         floorAnchor = null
         setup = setup.reset()
@@ -508,6 +512,11 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 val routeMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color(0xFF29B6F6))
                 }
+                // One model per placed rover: when the anchor goes (Recomeçar), SceneView destroys the
+                // model's entities along with its node, so a reused instance would come back
+                // invisible. A new one is loaded as soon as the old rover leaves, before the next tap,
+                // so the stand-in box is not seen in a normal game.
+                val roverModel = key(roverModelGeneration) { rememberModelInstance(modelLoader, ROVER_MODEL_ASSET) }
                 val reticleMark = remember(materialLoader) {
                     materialLoader.createUnlitColorInstance(Color.White.copy(alpha = 0.8f))
                 }
@@ -525,10 +534,6 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                 }
 
                 floorAnchor?.let { anchor ->
-                    // One model per placed rover: when the anchor goes (Recomeçar), SceneView destroys
-                    // the model's entities along with its node, so a shared instance would come back
-                    // invisible. Keyed on the anchor, the old model is freed and a new one loaded.
-                    val roverModel = key(anchor) { rememberModelInstance(modelLoader, ROVER_MODEL_ASSET) }
                     AnchorNode(
                         anchor = anchor,
                         onTrackingStateChanged = { anchorState = it },
