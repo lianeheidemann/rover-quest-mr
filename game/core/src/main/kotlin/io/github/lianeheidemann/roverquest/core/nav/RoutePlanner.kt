@@ -23,7 +23,7 @@ const val ROUTE_CELL_SIZE = 0.05f
  * A destination that depth sees inside an obstacle (often right next to furniture) is moved to the
  * nearest open floor within this distance, in meters, instead of being refused.
  */
-const val GOAL_SNAP_RADIUS = 0.30f
+const val GOAL_SNAP_RADIUS = 0.40f
 
 /** An empty depth map on the same grid as route planning. */
 fun newObstacleMap(): ObstacleMap = ObstacleMap(ROUTE_CELL_SIZE, FloorSetup.PLAY_AREA_HALF_SIZE)
@@ -159,7 +159,10 @@ private fun reachableFrom(grid: OccupancyGrid, start: Cell, allowUnknown: Boolea
     return seen
 }
 
-/** Non-blocked cells within [GOAL_SNAP_RADIUS] of [point], nearest first, seen free floor first. */
+/**
+ * Non-blocked cells between [ARRIVAL_DISTANCE] and [GOAL_SNAP_RADIUS] from [point], nearest first,
+ * seen free floor first.
+ */
 private fun openCellsNear(grid: OccupancyGrid, point: FloorPoint): List<Cell> {
     val center = grid.cellAt(point) ?: return emptyList()
     val reach = ceil(GOAL_SNAP_RADIUS / ROUTE_CELL_SIZE).toInt()
@@ -169,7 +172,8 @@ private fun openCellsNear(grid: OccupancyGrid, point: FloorPoint): List<Cell> {
             val cell = Cell(center.col + dc, center.row + dr)
             if (cell !in grid || grid[cell] == CellState.OCCUPIED) continue
             val distance = grid.centerOf(cell).distanceTo(point)
-            if (distance > GOAL_SNAP_RADIUS) continue
+            // Not closer than where the rover stops, so it never ends up on the flag.
+            if (distance > GOAL_SNAP_RADIUS || distance < ARRIVAL_DISTANCE) continue
             found += cell to distance + if (grid[cell] == CellState.FREE) 0f else GOAL_SNAP_RADIUS
         }
     }

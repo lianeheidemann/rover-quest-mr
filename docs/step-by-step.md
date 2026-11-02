@@ -104,7 +104,7 @@
     caixas e móveis) e mede as alturas a partir dele (`core/depth/FloorLevel.kt`). Planos muito
     inclinados ou com poucos pontos são ignorados, mantendo o anterior.
   - Destino marcado colado num móvel (a profundidade vê o ponto como ocupado): a rota vai até o
-    chão livre alcançável mais próximo, a até 30 cm, e o rover para ali virado para a bandeira, em vez
+    chão livre alcançável mais próximo, entre 22 e 40 cm da bandeira, e o rover para ali virado para a bandeira, em vez
     de mostrar "Destino num obstáculo" (`GOAL_SNAP_RADIUS` em `core/nav/RoutePlanner.kt`).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
@@ -121,7 +121,7 @@
     (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
     mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
-    O rover para 18 cm antes do centro do destino (bandeira 3D), sem subir no marcador, e faz uma dancinha de
+    O rover para a 22 cm do centro do destino (bandeira 3D), na primeira vez que chega a essa distância em qualquer trecho da rota, sem subir no marcador, e faz uma dancinha de
     vitória virado para o jogador: balança, gira uma volta e dá dois pulinhos de frente para a tela (`core/nav/RoverDance.kt`, não testado no
     celular de teste).
   - **Extra (pedido da autora), ainda não testado no celular:** ao colocar o rover pela primeira vez na

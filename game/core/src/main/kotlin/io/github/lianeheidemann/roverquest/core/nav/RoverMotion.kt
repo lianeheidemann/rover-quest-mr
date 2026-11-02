@@ -18,10 +18,11 @@ const val TURN_IN_PLACE_ABOVE = 20f
 const val WAYPOINT_REACHED = 0.02f
 
 /**
- * The rover stops this far, in meters, from the destination's center: just short of the
- * marker instead of on top of it. Smaller than the closest a destination can be placed.
+ * The rover stops this far, in meters, from the destination's center, wherever on the route it
+ * first gets that close: just short of the flag, never on top of it. Smaller than the closest a
+ * destination can be placed.
  */
-const val ARRIVAL_DISTANCE = 0.18f
+const val ARRIVAL_DISTANCE = 0.22f
 
 /** Where the rover is on the floor (anchor frame) and where its front (-Z) points, in degrees. */
 data class RoverPose(val position: FloorPoint = FloorPoint.ORIGIN, val heading: Float = 0f)
@@ -112,9 +113,8 @@ data class RoverMotion(
                 position = route[index]
                 index++
             }
-            val last = index >= route.size - 1
-            // The destination is reached just short of its marker.
-            if (index >= route.size || (last && position.distanceTo(route.last()) <= ARRIVAL_DISTANCE + 1e-4f)) {
+            // The destination is reached just short of its flag, on whatever leg the rover is.
+            if (index >= route.size || position.distanceTo(route.last()) <= ARRIVAL_DISTANCE + 1e-4f) {
                 return copy(
                     pose = RoverPose(position, heading),
                     status = MotionStatus.ARRIVED,
@@ -137,7 +137,8 @@ data class RoverMotion(
             heading = normalizeDegrees(heading + error.coerceIn(-maxTurn, maxTurn))
 
             val distance = position.distanceTo(waypoint)
-            val stopAt = if (last) distance - ARRIVAL_DISTANCE else distance
+            // Stop where this leg first comes within ARRIVAL_DISTANCE of the destination.
+            val stopAt = firstWithin(position, waypoint, route.last(), ARRIVAL_DISTANCE) ?: distance
             val travel = min(ROVER_SPEED * time, stopAt)
             val t = travel / distance
             position = FloorPoint(position.x + (waypoint.x - position.x) * t, position.z + (waypoint.z - position.z) * t)
@@ -146,6 +147,26 @@ data class RoverMotion(
         }
         return copy(pose = RoverPose(position, heading), status = status, pauseReason = null, target = index)
     }
+}
+
+/**
+ * Distance along the segment [from] → [to] to the first point within [radius] of [center], or
+ * `null` when the segment never gets that close.
+ */
+internal fun firstWithin(from: FloorPoint, to: FloorPoint, center: FloorPoint, radius: Float): Float? {
+    val length = from.distanceTo(to)
+    if (length == 0f) return null
+    val dx = (to.x - from.x) / length
+    val dz = (to.z - from.z) / length
+    val fx = from.x - center.x
+    val fz = from.z - center.z
+    // |f + s·d|² = r²  →  s² + 2(f·d)s + |f|² − r² = 0
+    val b = fx * dx + fz * dz
+    val c = fx * fx + fz * fz - radius * radius
+    val disc = b * b - c
+    if (disc < 0f) return null
+    val s = -b - kotlin.math.sqrt(disc)
+    return if (s in 0f..length) s else null
 }
 
 /** Shortest signed turn from [from] to [to], in degrees, within (-180, 180]. */

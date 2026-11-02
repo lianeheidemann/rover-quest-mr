@@ -102,7 +102,7 @@ data class FloorSetup(
         const val MAX_FLOOR_HEIGHT_DIFFERENCE = 0.10f
 
         /** The destination must be clearly apart from the rover. */
-        const val MIN_DESTINATION_DISTANCE = 0.20f
+        const val MIN_DESTINATION_DISTANCE = 0.30f
 
         /** Half the side of the square play area centered on the rover. */
         const val PLAY_AREA_HALF_SIZE = 2.5f

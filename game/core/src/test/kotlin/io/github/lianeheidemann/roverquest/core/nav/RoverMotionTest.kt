@@ -105,6 +105,27 @@ class RoverMotionTest {
     }
 
     @Test
+    fun `never stops on the flag when a corner is right next to it`() {
+        // The last corner is 5 cm from the destination: the rover must stop before that corner.
+        val destination = FloorPoint(0.05f, -0.6f)
+        val route = listOf(FloorPoint.ORIGIN, FloorPoint(0f, -0.6f), destination)
+        val done = RoverMotion().start(route).run(10f)
+        assertEquals(MotionStatus.ARRIVED, done.status)
+        assertEquals(ARRIVAL_DISTANCE, done.pose.position.distanceTo(destination), 2e-3f)
+    }
+
+    @Test
+    fun `stops the first time the route passes close to the destination`() {
+        // The route swings past the flag before its last corner.
+        val destination = FloorPoint(0.15f, -0.5f)
+        val route = listOf(FloorPoint.ORIGIN, FloorPoint(0f, -1f), FloorPoint(0.15f, -1f), destination)
+        val done = RoverMotion().start(route).run(20f)
+        assertEquals(MotionStatus.ARRIVED, done.status)
+        assertEquals(ARRIVAL_DISTANCE, done.pose.position.distanceTo(destination), 2e-3f)
+        assertTrue(done.pose.position.x < 0.01f, "stopped on the first leg that came close: ${done.pose.position}")
+    }
+
+    @Test
     fun `angles are normalized to the shortest turn`() {
         assertEquals(-10f, angleDifference(350f, 0f), 1e-4f)
         assertEquals(20f, angleDifference(10f, -10f), 1e-4f)

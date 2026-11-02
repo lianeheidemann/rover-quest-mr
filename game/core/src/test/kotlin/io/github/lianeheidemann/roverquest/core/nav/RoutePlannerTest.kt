@@ -101,7 +101,8 @@ class RoutePlannerTest {
         assertTrue(stops.all { grid[grid.cellAt(it)!!] != CellState.OCCUPIED }, "stops on open floor: $stops")
         // ...and ends with a short stub pointing at the destination.
         val spot = stops.last()
-        assertTrue(spot.distanceTo(FloorPoint(1.05f, 0f)) <= GOAL_SNAP_RADIUS)
+        val flag = FloorPoint(1.05f, 0f)
+        assertTrue(spot.distanceTo(flag) in ARRIVAL_DISTANCE..GOAL_SNAP_RADIUS, "spot $spot")
         assertTrue(route.points.last().distanceTo(spot) <= ARRIVAL_DISTANCE + 1e-4f)
 
         // The rover then stops on that open spot.
@@ -109,6 +110,7 @@ class RoutePlannerTest {
         repeat(60 * 20) { motion = motion.step(1f / 60, tracking = true, routeAvailable = true) }
         assertEquals(MotionStatus.ARRIVED, motion.status)
         assertTrue(motion.pose.position.distanceTo(spot) < 0.01f, "stopped at ${motion.pose.position}, spot $spot")
+        assertTrue(motion.pose.position.distanceTo(flag) >= ARRIVAL_DISTANCE - 0.01f, "never on the flag")
     }
 
     @Test
