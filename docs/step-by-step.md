@@ -118,7 +118,7 @@
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
     mudam, a rota é recalculada a partir de onde o rover está. ■ para; ao chegar, marca-se outro destino.
     O rover para 18 cm antes do centro do destino (bandeira 3D), sem subir no marcador, e faz uma dancinha de
-    vitória: balança, gira uma volta e dá dois pulinhos (`core/nav/RoverDance.kt`, não testado no
+    vitória virado para o jogador: balança, gira uma volta e dá dois pulinhos de frente para a tela (`core/nav/RoverDance.kt`, não testado no
     S23 Ultra).
   - **Extra (pedido da autora), não testado no S23 Ultra:** ao colocar o rover pela primeira vez na
     partida, ele dá meia-volta, vem até perto do celular (para 40 cm antes, no máximo 1,2 m), balança

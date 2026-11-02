@@ -91,6 +91,7 @@ import io.github.lianeheidemann.roverquest.core.floor.PlacementResult
 import io.github.lianeheidemann.roverquest.core.floor.SetupHint
 import io.github.lianeheidemann.roverquest.core.floor.SetupPhase
 import io.github.lianeheidemann.roverquest.core.floor.roverHeading
+import io.github.lianeheidemann.roverquest.core.floor.headingDegrees
 import io.github.lianeheidemann.roverquest.core.floor.setupHint
 import io.github.lianeheidemann.roverquest.core.nav.RoutePlan
 import io.github.lianeheidemann.roverquest.core.nav.planRoute
@@ -229,6 +230,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         roverHeading(setup, (route as? RoutePlan.Route)?.points, from = motion.pose.position)
     }
     val roverPose = greeting?.pose
+        ?: dance?.let { motion.pose.copy(heading = it.heading) }
         ?: if (motion.status == MotionStatus.IDLE) motion.pose.copy(heading = idleHeading) else motion.pose
     // No dots once arrived: the rover stops just short of the marker, with nothing left to drive.
     val arrived = motion.status == MotionStatus.ARRIVED
@@ -268,7 +270,15 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     }
 
     LaunchedEffect(motion.status) {
-        if (motion.status == MotionStatus.ARRIVED) dance = RoverDance()
+        if (motion.status == MotionStatus.ARRIVED) {
+            // Dance facing the player: towards the point on the floor under the phone.
+            val anchor = floorAnchor
+            val facing = if (anchor != null) {
+                val player = anchor.pose.inverse().transformPoint(cameraPosition)
+                headingDegrees(motion.pose.position, FloorPoint(player[0], player[2]))
+            } else motion.pose.heading
+            dance = RoverDance(from = motion.pose.heading, facing = facing)
+        }
     }
     LaunchedEffect(dance != null) {
         if (dance == null) return@LaunchedEffect
@@ -580,7 +590,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
                         // The rover turns to face where it will go: the route, or the destination.
                         Node(
                             position = Position(x = roverPose.position.x, y = dance?.lift ?: 0f, z = roverPose.position.z),
-                            rotation = Rotation(y = roverPose.heading + (dance?.turn ?: 0f)),
+                            rotation = Rotation(y = roverPose.heading),
                         ) {
                             if (model != null) {
                                 // Standing on the floor at the anchor origin, facing -Z.
