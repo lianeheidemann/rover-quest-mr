@@ -88,6 +88,10 @@ class ObstacleMapTest {
         assertEquals(null, destinationRejection(map, FloorPoint(0.55f, 0.05f)))
         assertEquals(PlacementRejection.ON_SEEN_OBSTACLE, destinationRejection(map, FloorPoint(1f, 0f)))
         assertEquals(PlacementRejection.NOT_SEEN, destinationRejection(map, FloorPoint(-1f, -1f)))
+
+        // The virtual obstacle may stand on a seen obstacle, but not outside the mapped area.
+        assertEquals(null, obstacleRejection(map, FloorPoint(1f, 0f)))
+        assertEquals(PlacementRejection.NOT_SEEN, obstacleRejection(map, FloorPoint(-1f, -1f)))
     }
 
     @Test

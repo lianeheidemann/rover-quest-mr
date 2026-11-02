@@ -21,6 +21,7 @@ import io.github.lianeheidemann.roverquest.core.floor.roverHeading
 import io.github.lianeheidemann.roverquest.core.nav.MotionStatus
 import io.github.lianeheidemann.roverquest.core.nav.ObstacleMap
 import io.github.lianeheidemann.roverquest.core.nav.destinationRejection
+import io.github.lianeheidemann.roverquest.core.nav.obstacleRejection
 import io.github.lianeheidemann.roverquest.core.nav.RoutePlan
 import io.github.lianeheidemann.roverquest.core.nav.RoverDance
 import io.github.lianeheidemann.roverquest.core.nav.RoverGreeting
@@ -103,8 +104,8 @@ internal class GameState {
     /**
      * A tap on the floor at [hit]: places the rover first, then the destination or the obstacle.
      *
-     * @param map what depth has seen, or `null` without depth: then the destination is not
-     *   checked against the map.
+     * @param map what depth has seen, or `null` without depth: then the destination and the
+     *   obstacle are not checked against the map.
      */
     fun onTap(hit: HitResult?, cameraTracking: Boolean, map: ObstacleMap?) {
         // Nothing is placed until the player accepts the detected floor area.
@@ -132,7 +133,10 @@ internal class GameState {
                 ?.let { PlacementResult.Rejected(it) }
                 // The destination must also be on floor depth has seen, and not on a seen obstacle.
                 ?: setup.placeDestination(local[0], local[1], local[2], rover = motion.pose.position)
-            TapMode.OBSTACLE -> setup.placeObstacle(local[0], local[1], local[2], rover = motion.pose.position)
+            TapMode.OBSTACLE -> map?.let { obstacleRejection(it, FloorPoint(local[0], local[2])) }
+                ?.let { PlacementResult.Rejected(it) }
+                // The virtual obstacle stays within the floor depth has seen.
+                ?: setup.placeObstacle(local[0], local[1], local[2], rover = motion.pose.position)
         }
         when (result) {
             is PlacementResult.Accepted -> {

@@ -128,6 +128,11 @@
 - A bandeira não pode mais ser colocada em cima de obstáculo visto (vermelho) nem em chão nunca visto
   (sem cor); furinhos no meio do verde e a folga laranja continuam aceitos
   (`destinationRejection` em `core/nav/RoutePlanner.kt`).
+- ⚠️ O chão longe do rover (1–2 m, junto aos móveis) voltou a ficar vermelho: o erro da profundidade
+  cresce com a distância até a **câmera**, e um plano único na âncora não acompanha isso.
+  **Corrigido, aguardando validação:** depois do plano, cada faixa de 25 cm de distância da câmera
+  mede o seu próprio nível de chão e as alturas são dadas a partir dele (`core/depth/RangeLeveling.kt`).
+- O obstáculo virtual só pode ser colocado em chão já visto pelo mapa (`obstacleRejection`).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 

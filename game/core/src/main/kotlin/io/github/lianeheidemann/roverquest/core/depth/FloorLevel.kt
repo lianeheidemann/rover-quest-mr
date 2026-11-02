@@ -81,7 +81,9 @@ class FloorLevel {
      */
     fun level(samples: List<FloorSample>): List<FloorSample> {
         fit(samples)
-        return samples.map { it.copy(height = it.height - floorAt(it.x, it.z)) }
+        val abovePlane = samples.map { it.copy(height = it.height - floorAt(it.x, it.z)) }
+        // What the plane cannot follow: errors that grow with the distance from the camera.
+        return levelByRange(abovePlane)
     }
 
     private fun fit(samples: List<FloorSample>) {

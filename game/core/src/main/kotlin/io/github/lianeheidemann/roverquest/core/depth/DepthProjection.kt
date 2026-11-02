@@ -10,9 +10,9 @@ data class CameraIntrinsics(val fx: Float, val fy: Float, val cx: Float, val cy:
 /**
  * A real-world point seen by the depth camera, in the floor anchor's frame: [x] and [z] on the
  * floor (same axes as [io.github.lianeheidemann.roverquest.core.floor.FloorPoint]) and [height]
- * above it.
+ * above it. [depth] is its distance from the camera, in meters (`0` when unknown).
  */
-data class FloorSample(val x: Float, val z: Float, val height: Float)
+data class FloorSample(val x: Float, val z: Float, val height: Float, val depth: Float = 0f)
 
 /**
  * Depth is only trusted between these distances, in meters, for mapping. Far away the floor is
@@ -62,7 +62,7 @@ fun projectToFloor(
             val x = m[0] * cx + m[4] * cy + m[8] * cz + m[12]
             val y = m[1] * cx + m[5] * cy + m[9] * cz + m[13]
             val z = m[2] * cx + m[6] * cy + m[10] * cz + m[14]
-            samples.add(FloorSample(x = x, z = z, height = y))
+            samples.add(FloorSample(x = x, z = z, height = y, depth = d))
         }
     }
     return samples

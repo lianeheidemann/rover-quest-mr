@@ -52,6 +52,13 @@ fun destinationRejection(map: ObstacleMap, point: FloorPoint): PlacementRejectio
     }
 }
 
+/**
+ * Why the manual obstacle cannot go at [point], or `null` when it can: only on floor depth has
+ * seen (it may stand on a seen obstacle, but not outside the mapped area).
+ */
+fun obstacleRejection(map: ObstacleMap, point: FloorPoint): PlacementRejection? =
+    destinationRejection(map, point)?.takeIf { it != PlacementRejection.ON_SEEN_OBSTACLE }
+
 /** An empty depth map on the same grid as route planning. */
 fun newObstacleMap(): ObstacleMap = ObstacleMap(ROUTE_CELL_SIZE, FloorSetup.PLAY_AREA_HALF_SIZE)
 
