@@ -6,6 +6,7 @@ import io.github.lianeheidemann.roverquest.core.nav.newObstacleMap
 import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FloorLevelTest {
@@ -124,6 +125,22 @@ class FloorLevelTest {
         level.settle(floor({ _, _ -> 0f }))
         level.level(floor({ _, _ -> 0.07f }))
         assertTrue(level.a < 0.02f, "jumped to ${level.a}")
+    }
+
+    @Test
+    fun `floor well off the anchor is still found, and only then trusted`() {
+        // ARCore's plane under the anchor 12 cm below the floor depth sees (shiny floor).
+        val raw = floor({ _, _ -> 0.12f })
+        val level = FloorLevel()
+        assertFalse(level.settled)
+        level.level(raw)
+        assertEquals(0.12f, level.a, 0.01f, "the first fit is taken as is")
+        assertFalse(level.settled)
+        val leveled = level.settle(raw, frames = 2)
+        assertTrue(level.settled)
+        assertEquals(CellState.FREE, stateAt(leveled, 0f, -2f))
+        level.reset()
+        assertFalse(level.settled)
     }
 
     @Test

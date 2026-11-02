@@ -94,7 +94,9 @@ internal class DepthMapper {
         val intrinsics = depthIntrinsics(frame, depthFrame) ?: return
         val floorFromCamera = FloatArray(16)
         anchor.pose.inverse().compose(frame.camera.pose).toMatrix(floorFromCamera, 0)
-        if (obstacleMap.integrate(floorLevel.level(projectToFloor(depthFrame, intrinsics, floorFromCamera)))) {
+        val leveled = floorLevel.level(projectToFloor(depthFrame, intrinsics, floorFromCamera))
+        // Heights are only trusted once the floor is known; until then nothing is voted.
+        if (floorLevel.settled && obstacleMap.integrate(leveled)) {
             mapVersion = obstacleMap.version
         }
         if (frame.timestamp - lastOverlayAtNs >= OVERLAY_UPDATE_INTERVAL_NS) {

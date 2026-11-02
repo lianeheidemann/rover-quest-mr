@@ -119,6 +119,11 @@
   bastavam para a célula votar "obstáculo", mesmo com dezenas de pontos de chão.
   **Corrigido, aguardando validação:** a célula só vota "obstáculo" se pelo menos 40% dos seus pontos
   forem altos; senão vale a maioria (`MIN_OBSTACLE_SHARE` em `core/nav/ObstacleMap.kt`).
+- ⚠️ Chão inteiro vermelho logo ao colocar o rover: o chão visto pela profundidade estava a mais de
+  8 cm do plano do ARCore (limite apertado demais) e o mapa votava antes de o chão ser estimado.
+  **Corrigido, aguardando validação:** busca e limite de ±15 cm, escolhendo o pico de altura forte
+  mais perto da âncora; o primeiro ajuste vale inteiro e o mapa só vota depois de 3 ajustes
+  (`FloorLevel.settled`).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 

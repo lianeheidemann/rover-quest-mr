@@ -7,7 +7,7 @@ import kotlin.math.abs
  * floor. Tied to the anchor, not to the last estimate, so the estimate cannot drift away step by
  * step (for example sinking into reflections on a shiny floor).
  */
-const val FLOOR_SEARCH_RANGE = 0.10f
+const val FLOOR_SEARCH_RANGE = 0.15f
 
 /** Points this close to the fitted floor, in meters, are used to refine it. */
 const val FLOOR_FIT_RANGE = 0.04f
@@ -24,8 +24,17 @@ const val MIN_FLOOR_POINTS = 200
  */
 const val MAX_FLOOR_SLOPE = 0.04f
 
-/** Largest accepted floor offset from the anchor, in meters: the anchor was placed on the floor. */
-const val MAX_FLOOR_OFFSET = 0.08f
+/**
+ * Largest accepted floor offset from the anchor, in meters. The anchor sits on ARCore's floor
+ * plane, which on a shiny floor can be several centimeters off the floor depth sees.
+ */
+const val MAX_FLOOR_OFFSET = 0.15f
+
+/** A height bin with at least this share of the tallest bin's points may be the floor. */
+const val FLOOR_PEAK_SHARE = 0.3f
+
+/** Accepted fits needed before the floor estimate is trusted (see [FloorLevel.settled]). */
+const val FLOOR_FITS_TO_SETTLE = 3
 
 /** Share of the way the floor estimate moves towards each new fit, so one bad frame does little. */
 const val FLOOR_SMOOTHING = 0.2f
@@ -50,11 +59,20 @@ class FloorLevel {
     var c = 0f
         private set
 
+    private var fits = 0
+
+    /**
+     * The floor has been fitted a few times: until then heights are not trustworthy, and an
+     * obstacle map fed with them would paint plain floor as obstacles from the first frames.
+     */
+    val settled: Boolean get() = fits >= FLOOR_FITS_TO_SETTLE
+
     private fun floorAt(x: Float, z: Float) = a + b * x + c * z
 
     /** Back to the anchor's own floor, for a new anchor. */
     fun reset() {
         a = 0f; b = 0f; c = 0f
+        fits = 0
     }
 
     /**
@@ -79,7 +97,13 @@ class FloorLevel {
             val i = ((tilted(s) + FLOOR_SEARCH_RANGE) / FLOOR_BIN).toInt().coerceIn(0, bins - 1)
             counts[i]++
         }
-        val peak = counts.indices.maxBy { counts[it] }
+        // Among the strong peaks (the floor, but also maybe a wide low box or a rug), the one
+        // closest to the anchor's level: the anchor was placed on the floor.
+        val strongest = counts.max()
+        val center = (bins - 1) / 2f
+        val peak = counts.indices
+            .filter { counts[it] >= FLOOR_PEAK_SHARE * strongest }
+            .minBy { abs(it - center) }
         var fa = -FLOOR_SEARCH_RANGE + (peak + 0.5f) * FLOOR_BIN
         var fb = b
         var fc = c
@@ -90,9 +114,12 @@ class FloorLevel {
             fa = plane[0]; fb = plane[1]; fc = plane[2]
         }
         if (abs(fb) > MAX_FLOOR_SLOPE || abs(fc) > MAX_FLOOR_SLOPE || abs(fa) > MAX_FLOOR_OFFSET) return
-        a += (fa - a) * FLOOR_SMOOTHING
-        b += (fb - b) * FLOOR_SMOOTHING
-        c += (fc - c) * FLOOR_SMOOTHING
+        // The first fit is taken as is; later ones only nudge the estimate.
+        val k = if (fits == 0) 1f else FLOOR_SMOOTHING
+        a += (fa - a) * k
+        b += (fb - b) * k
+        c += (fc - c) * k
+        fits++
     }
 }
 
