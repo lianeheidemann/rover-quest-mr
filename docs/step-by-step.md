@@ -166,8 +166,8 @@ Fora do plano original; animações puras em `:core`, sem efeito nas regras.
 
 | Marco | Partes | Resultado |
 | --- | --- | --- |
-| M1 — Base Android/AR | 1–2 | Rover e destino sobre piso real |
-| M2 — Navegação | 3 | A* e obstáculo manual com testes |
+| M1 — Base Android/AR ✅ | 1–2 | Rover e destino sobre piso real |
+| M2 — Navegação ✅ | 3 | A* e obstáculo manual com testes |
 | M3 — Visão espacial ✅ | 4–5 | Mapa de obstáculos estimado por profundidade |
 | **M4 — MVP ✅** | **6** | **Rover desvia de caixa real** |
 | M5 — Jogo completo | 7–8 | Mecânica de jogo, validação e documentação |
