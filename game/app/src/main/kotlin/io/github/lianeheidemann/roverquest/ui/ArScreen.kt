@@ -29,6 +29,7 @@ import io.github.lianeheidemann.roverquest.core.depth.CameraIntrinsics
 import io.github.lianeheidemann.roverquest.core.depth.ColoredDepth
 import io.github.lianeheidemann.roverquest.core.depth.DepthFrame
 import io.github.lianeheidemann.roverquest.core.depth.projectToFloor
+import io.github.lianeheidemann.roverquest.core.depth.FloorLevel
 import io.github.lianeheidemann.roverquest.core.nav.NoPathReason
 import io.github.lianeheidemann.roverquest.core.nav.ROUTE_CELL_SIZE
 import io.github.lianeheidemann.roverquest.core.nav.buildGrid
@@ -185,6 +186,8 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
     // Obstacle map from depth (Part 5), in the floor anchor's frame. Without depth support the
     // route falls back to the manual obstacle only.
     val obstacleMap = remember { newObstacleMap() }
+    // Heights are measured from the floor depth sees, not from the anchor (see FloorLevel).
+    val floorLevel = remember { FloorLevel() }
     var mapVersion by remember { mutableIntStateOf(0) }
     var showMap by remember { mutableStateOf(false) }
     // Phone torch, for playing in dim rooms: more light also helps tracking and depth.
@@ -322,6 +325,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         routeStart = FloorPoint.ORIGIN
         // The map lives in the old anchor's frame.
         obstacleMap.clear()
+        floorLevel.reset()
         mapVersion++
         overlayVersion++
     }
@@ -334,7 +338,7 @@ fun ArScreen(onSessionFailed: (String) -> Unit) {
         val intrinsics = depthIntrinsics(frame, depthFrame) ?: return
         val floorFromCamera = FloatArray(16)
         anchor.pose.inverse().compose(frame.camera.pose).toMatrix(floorFromCamera, 0)
-        if (obstacleMap.integrate(projectToFloor(depthFrame, intrinsics, floorFromCamera))) {
+        if (obstacleMap.integrate(floorLevel.level(projectToFloor(depthFrame, intrinsics, floorFromCamera)))) {
             mapVersion = obstacleMap.version
         }
         if (frame.timestamp - lastOverlayAtNs >= OVERLAY_UPDATE_INTERVAL_NS) {

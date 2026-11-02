@@ -97,10 +97,12 @@
     piso visto como livre e, se faltar ver parte do caminho, pede para apontar a câmera. Chip "Mapa":
     verde = livre, vermelho = obstáculo visto, laranja = folga do rover ou obstáculo virtual. Sem
     suporte a profundidade, só o obstáculo virtual bloqueia, com aviso.
-  - **Pendência:** com o rover longe do celular, ou depois de o celular balançar, o chão perto da
-    câmera é marcado como obstáculo: a altura é medida em relação à âncora, e alguns centímetros de
-    diferença entre a âncora e o chão real bastam. Correção proposta: estimar a altura do chão a
-    partir da própria profundidade.
+  - **Corrigido, aguardando validação no S23 Ultra:** longe do rover o chão era marcado como
+    obstáculo, porque a altura era medida em relação à âncora, e alguns centímetros de diferença
+    (âncora fora do chão real, erro da profundidade com a distância) bastavam. Agora, a cada leitura,
+    o jogo ajusta um plano ao chão que a profundidade vê (mediana + mínimos quadrados, ignorando
+    caixas e móveis) e mede as alturas a partir dele (`core/depth/FloorLevel.kt`). Planos muito
+    inclinados ou com poucos pontos são ignorados, mantendo o anterior.
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
