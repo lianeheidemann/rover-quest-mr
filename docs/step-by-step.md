@@ -89,7 +89,7 @@
 - [x] Célula não observada continua desconhecida, nunca livre.
 - [x] Sobreposição visual da grade para depuração.
 - [x] Obstáculo manual continua disponível.
-  - **Testado no celular de teste: falhou.** A profundidade vira pontos no frame da âncora
+  - **Teste no celular: falhou.** A profundidade vira pontos no frame da âncora
     do piso (`core/depth/DepthProjection.kt`). Pontos entre 5 e 40 cm de altura votam "obstáculo";
     pontos no piso (±3 cm) votam "livre", até 2,5 m da câmera; reflexos abaixo do piso e o que fica acima de 40 cm (tampo de
     mesa) não votam. Uma célula só muda de estado após 3 votos líquidos, com histerese
@@ -121,7 +121,7 @@
     O rover para 18 cm antes do centro do destino (bandeira 3D), sem subir no marcador, e faz uma dancinha de
     vitória virado para o jogador: balança, gira uma volta e dá dois pulinhos de frente para a tela (`core/nav/RoverDance.kt`, não testado no
     celular de teste).
-  - **Extra (pedido da autora), não testado no celular de teste:** ao colocar o rover pela primeira vez na
+  - **Extra (pedido da autora), ainda não testado no celular:** ao colocar o rover pela primeira vez na
     partida, ele dá meia-volta, vem até perto do celular (para 40 cm antes, no máximo 1,2 m), balança
     como quem cumprimenta, dá outra meia-volta e volta ao ponto inicial (`core/nav/RoverGreeting.kt`).
     É só animação: não desvia de obstáculos e os toques esperam ela terminar.
