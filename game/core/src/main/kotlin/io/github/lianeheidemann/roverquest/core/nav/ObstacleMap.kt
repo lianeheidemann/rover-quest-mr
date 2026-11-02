@@ -15,6 +15,13 @@ const val FLOOR_TOLERANCE = 0.03f
 /** A cell needs this many points of one kind in a frame to get a vote. */
 const val MIN_POINTS_PER_VOTE = 2
 
+/**
+ * Share of a cell's points (high ones plus floor ones) that must be high for the cell to vote
+ * "obstacle". On a plain, shiny floor depth is noisy and a few floor points come out high; they
+ * must not outvote the many points that say "floor". A real box fills its cells with high points.
+ */
+const val MIN_OBSTACLE_SHARE = 0.4f
+
 /** Votes needed to call a cell occupied (positive) or free (negative). */
 const val VOTES_TO_DECIDE = 3
 
@@ -67,9 +74,11 @@ class ObstacleMap(cellSize: Float, halfSize: Float) {
         var changed = false
         val keys = obstacleHits.keys + floorHits.keys
         for (key in keys) {
+            val high = obstacleHits[key] ?: 0
+            val floor = floorHits[key] ?: 0
             val vote = when {
-                (obstacleHits[key] ?: 0) >= MIN_POINTS_PER_VOTE -> 1
-                (floorHits[key] ?: 0) >= MIN_POINTS_PER_VOTE -> -1
+                high >= MIN_POINTS_PER_VOTE && high >= MIN_OBSTACLE_SHARE * (high + floor) -> 1
+                floor >= MIN_POINTS_PER_VOTE && floor > high -> -1
                 else -> 0
             }
             if (vote == 0) continue

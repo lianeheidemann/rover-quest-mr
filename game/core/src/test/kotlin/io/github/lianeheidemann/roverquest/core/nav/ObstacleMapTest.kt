@@ -61,6 +61,22 @@ class ObstacleMapTest {
     }
 
     @Test
+    fun `a few noisy high points on plain floor do not make an obstacle`() {
+        val map = newObstacleMap()
+        // Plain shiny floor: 40 floor points per cell and 3 noisy ones read 6 cm high, every frame.
+        repeat(10) { map.integrate(points(0.6f, 0f, 0.005f, count = 40) + points(0.6f, 0f, 0.06f)) }
+        assertEquals(CellState.FREE, map.state(0.6f, 0f))
+    }
+
+    @Test
+    fun `a cell mostly covered by a box is an obstacle`() {
+        val map = newObstacleMap()
+        // Box side and top: most points high, some floor at the cell's edge.
+        repeat(3) { map.integrate(points(0.9f, 0f, 0.15f, count = 12) + points(0.9f, 0f, 0f, count = 10)) }
+        assertEquals(CellState.OCCUPIED, map.state(0.9f, 0f))
+    }
+
+    @Test
     fun `clear forgets everything`() {
         val map = newObstacleMap()
         repeat(3) { map.integrate(points(1f, 0f, 0.1f)) }

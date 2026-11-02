@@ -115,6 +115,10 @@
   abaixo e caixas acima não o deslocam), a busca fica presa à âncora (±10 cm), a inclinação aceita
   caiu para ~2° e cada leitura move a estimativa só 20%. Com "Profundidade" ligado, o painel mostra
   "chão ±x cm · incl. y%" para conferir no celular.
+- ⚠️ Manchas vermelhas espalhadas no piso liso, de dia e sem lanterna: 2 pontos ruidosos acima de 5 cm
+  bastavam para a célula votar "obstáculo", mesmo com dezenas de pontos de chão.
+  **Corrigido, aguardando validação:** a célula só vota "obstáculo" se pelo menos 40% dos seus pontos
+  forem altos; senão vale a maioria (`MIN_OBSTACLE_SHARE` em `core/nav/ObstacleMap.kt`).
 
 **Concluído quando:** uma caixa real aparece de forma estável como bloqueada e o A* calcula o desvio.
 
