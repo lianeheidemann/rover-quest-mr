@@ -80,4 +80,4 @@ Testado no Galaxy S23 Ultra. Para instalar, baixe o APK em [Releases](https://gi
 
 ## Licença
 
-Distribuído sob a [licença MIT](LICENSE). Os ícones da interface vêm do Material Design (Apache 2.0).
+Distribuído sob a [licença MIT](LICENSE). Os ícones da interface vêm do [Material Design](https://fonts.google.com/icons) ([Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0)).
