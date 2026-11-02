@@ -22,6 +22,20 @@ Todo o código do jogo fica em `game/` (projeto Gradle com os módulos `:app` e 
   em vez de afirmar que funciona.
 - Detalhes não especificados no plano ficam a critério do código existente; adapte-se a ele.
 
+## Modularização
+- Antes de cada implementação, decida onde o código novo deve ficar: no arquivo e pacote de mesma
+  responsabilidade (`ui/ar`, `ui/panels`, `ui/components`, `core/<domínio>`) ou num arquivo novo.
+  Não acrescente uma responsabilidade nova a um arquivo que já faz outra coisa.
+- Avise a autora, antes de implementar, quando achar necessário modularizar. Por exemplo:
+  - um arquivo passou de ~300 linhas;
+  - uma função ou composable mistura várias tarefas;
+  - há lógica repetida;
+  - há regra de jogo fora do `:core`.
+
+  Proponha a divisão e só a faça com o pedido dela.
+- Modularizar é reorganizar sem mudar comportamento: o app deve compilar e os testes devem passar
+  igual; diga o que foi movido para onde.
+
 ## Regras técnicas
 - Sem Unity, C#, AR Foundation ou motores de jogos.
 - Grade, A* e projeção de profundidade ficam no módulo `:core`, Kotlin puro, sem imports Android.
