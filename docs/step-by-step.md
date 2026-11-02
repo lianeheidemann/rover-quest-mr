@@ -108,11 +108,12 @@
 
 ### Parte 6 — Navegação do rover
 
-- [ ] Rover segue a rota com movimento suave.
+- [x] Rover segue a rota com movimento suave.
 - [ ] Para quando o rastreamento ou o mapa ficam pouco confiáveis.
 - [ ] Replaneja quando o mapa muda de forma estável.
-  - **Implementado, não validado:** o rover ainda não completou um trajeto contornando uma caixa
-    real no S23 Ultra, porque depende da Parte 5. Botão "Ir" inicia o trajeto; o rover anda a
+  - **Validado no S23 Ultra:** o rover seguiu a rota contornando o obstáculo virtual e chegou ao
+    destino. **Falta validar:** pausa/replanejamento e o trajeto contornando uma caixa real, que
+    depende da Parte 5. Botão "Ir" inicia o trajeto; o rover anda a
     15 cm/s, gira no lugar quando precisa virar mais de 20° e passa exatamente pelos cantos da rota
     (`core/nav/RoverMotion.kt`). Pausa se a câmera ou a âncora perdem o rastreamento, ou se não há
     rota por piso visto como livre, e retoma sozinho. Quando o mapa (com histerese) ou o destino/obstáculo
